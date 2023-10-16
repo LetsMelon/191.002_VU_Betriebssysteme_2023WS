@@ -2,7 +2,7 @@ CC = gcc
 DEFS = -D_BSD_SOURCE -D_SVID_SOURCE -D_POSIX_C_SOURCE=200809L
 CFLAGS = -Wall -g -std=c99 -pedantic $(DEFS)
 
-OBJECTS = main.o arguments.o output.o
+OBJECTS = main.o arguments.o output.o logic.o
 
 .PHONY: all clean
 all: mygrep
@@ -16,6 +16,7 @@ mygrep: $(OBJECTS)
 main.o: ./src/main.c
 arguments.o: ./src/arguments.c
 output.o: ./src/output.c
+logic.o: ./src/logic.c
 
 clean:
 	rm -rf *.o mygrep

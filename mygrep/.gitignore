@@ -3,3 +3,4 @@ mygrep
 .idea/
 main*/
 output.txt
+.vscode/
