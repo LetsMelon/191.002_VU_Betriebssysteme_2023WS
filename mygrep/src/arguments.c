@@ -3,8 +3,20 @@
 #include <stdbool.h>
 #include <getopt.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "arguments.h"
+
+void to_lowercase(char *str)
+{
+    if (str == NULL)
+        return;
+
+    for (int i = 0; i < strlen(str); i++)
+    {
+        str[i] = tolower(str[i]);
+    }
+}
 
 void arguments_init(arguments_t *arg)
 {
@@ -31,6 +43,26 @@ void arguments_free(arguments_t *arg)
     free(arg->input_files);
     arg->input_files_num = 0;
     arg->input_files_capacity = 0;
+}
+
+void arguments_print(arguments_t *arg)
+{
+    printf("arguments_t { output_file: \"%s\", keyword: \"%s\", case_sensitive: %s, input_files: [",
+           arg->output_file ? arg->output_file : "None",
+           arg->keyword ? arg->keyword : "None",
+           arg->case_sensitive ? "true" : "false");
+
+    for (int i = 0; i < arg->input_files_num; i++)
+    {
+        printf("\"%s\"", arg->input_files[i]);
+        if (i < arg->input_files_num - 1)
+        {
+            printf(", ");
+        }
+    }
+
+    printf("], input_files_num: %d, input_files_capacity: %d }\n",
+           arg->input_files_num, arg->input_files_capacity);
 }
 
 void arguments_add_input_file(arguments_t *arg, char *file)
@@ -74,6 +106,12 @@ int arguments_parse(arguments_t *arg, int argc, char **argv)
     if (optind < argc)
     {
         arg->keyword = strdup(argv[optind]);
+
+        if (arg->case_sensitive == false)
+        {
+            to_lowercase(arg->keyword);
+        }
+
         optind += 1;
     }
 
