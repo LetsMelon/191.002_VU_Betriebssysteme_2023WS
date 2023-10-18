@@ -29,17 +29,29 @@ int main(int argc, char **argv)
     }
     else
     {
-        output_init_file(args.output_file);
+        if (output_init_file(args.output_file) != 0)
+        {
+            printf("Error while trying to initialize output file.");
+            return EXIT_FAILURE;
+        }
     }
 
     arguments_print(&args);
     if (args.input_files_num == 0)
     {
-        process_file(stdin, &args);
+        if (process_file(stdin, &args) != 0)
+        {
+            printf("Error while trying to read from stdin.");
+            return EXIT_FAILURE;
+        }
     }
     else
     {
-        process_files(&args);
+        if (process_files(&args) != 0)
+        {
+            printf("Error while trying to read from the given files.");
+            return EXIT_FAILURE;
+        }
     }
 
     arguments_free(&args);
