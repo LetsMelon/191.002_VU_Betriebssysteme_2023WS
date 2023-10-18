@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include "output.h"
 
@@ -35,7 +36,20 @@ int output_printf(const char *format, ...)
     va_list args;
     va_start(args, format);
 
-    int return_value = vfprintf(out_file, format, args);
+    char modified_format[strlen(format) * 2 + 1];
+    int j = 0;
+    for (int i = 0; format[i] != '\0'; i++) {
+        if (format[i] == '%') {
+            modified_format[j] = '%';
+            j += 1;
+        }
+
+        modified_format[j] = format[i];
+        j += 1;
+    }
+    modified_format[j] = '\0';
+
+    int return_value = vfprintf(out_file, modified_format, args);
     va_end(args);
 
     return return_value;

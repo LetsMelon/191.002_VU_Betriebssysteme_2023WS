@@ -40,7 +40,10 @@ int process_file(FILE *file, arguments_t *args)
 
     while (getline(&line, &len, file) != -1)
     {
-        process_line(line, args);
+        if (process_line(line, args) != 0)
+        {
+            return -1;
+        }
     }
 
     free(line);
@@ -48,7 +51,7 @@ int process_file(FILE *file, arguments_t *args)
     return 0;
 }
 
-void process_line(const char *line, arguments_t *args)
+int process_line(const char *line, arguments_t *args)
 {
     char *current_line = strdup(line);
     if (current_line == NULL)
@@ -76,4 +79,6 @@ void process_line(const char *line, arguments_t *args)
     }
 
     free(current_line);
+
+    return 0;
 }

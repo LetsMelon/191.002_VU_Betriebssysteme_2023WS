@@ -7,7 +7,7 @@ not working 0 echo -e "Small\nis smaller\nthan huge." | ./mygrep -i "small"
 0 echo -e "Oh, z.,\nZZZzZ.\nz\nZ\nZZZz\nzZ...." | ./mygrep -i "Z."
 0 echo -e "new\nline" | ./mygrep ""
 0 ./mygrep -o outfile.txt 2 infile.txt
-panic 0 ./mygrep -i Test ./test/infile1 ./test/infile2
+0 ./mygrep -i Test ./test/infile1 ./test/infile2
 0 echo -e "abcdef\nabbcdef\nabscdef\nabecdef\naabcdef\n" | ./mygrep -i -o outfile "ABC"
 0 ./mygrep -i "yes" longline > longgrep
 1 ./mygrep test nonExistingTestfile

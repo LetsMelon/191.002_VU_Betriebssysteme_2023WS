@@ -31,7 +31,7 @@ int main(int argc, char **argv)
     {
         if (output_init_file(args.output_file) != 0)
         {
-            printf("Error while trying to initialize output file.");
+            printf("Error while trying to initialize output file.\n");
             return EXIT_FAILURE;
         }
     }
@@ -41,7 +41,7 @@ int main(int argc, char **argv)
     {
         if (process_file(stdin, &args) != 0)
         {
-            printf("Error while trying to read from stdin.");
+            printf("Error while trying to read from stdin.\n");
             return EXIT_FAILURE;
         }
     }
@@ -49,7 +49,7 @@ int main(int argc, char **argv)
     {
         if (process_files(&args) != 0)
         {
-            printf("Error while trying to read from the given files.");
+            printf("Error while trying to read from the given files.\n");
             return EXIT_FAILURE;
         }
     }
