@@ -65,24 +65,41 @@ void arguments_print(arguments_t *arg)
            arg->input_files_num, arg->input_files_capacity);
 }
 
-void arguments_add_input_file(arguments_t *arg, char *file)
+int arguments_add_input_file(arguments_t *arg, char *file)
 {
     if (arg->input_files == NULL || arg->input_files_capacity == 0)
     {
         arg->input_files_capacity = 8;
-        arg->input_files = (char **)malloc(arg->input_files_capacity * sizeof(char *));
         arg->input_files_num = 0;
+
+        arg->input_files = (char **)malloc(arg->input_files_capacity * sizeof(char *));
+        if (arg->input_files == NULL)
+        {
+            return -1;
+        }
     }
 
     if (arg->input_files_num >= arg->input_files_capacity)
     {
         arg->input_files_capacity = arg->input_files_capacity * 3 / 2;
+
         arg->input_files = (char **)realloc(arg->input_files, arg->input_files_capacity * sizeof(char *));
+        if (arg->input_files == NULL)
+        {
+            return -1;
+        }
     }
 
     arg->input_files[arg->input_files_num] = (char *)malloc(strlen(file) + 1);
+    if (arg->input_files[arg->input_files_num] == NULL)
+    {
+        return -1;
+    }
+
     strcpy(arg->input_files[arg->input_files_num], file);
     arg->input_files_num += 1;
+
+    return 0;
 }
 
 int arguments_parse(arguments_t *arg, int argc, char **argv)
@@ -109,6 +126,10 @@ int arguments_parse(arguments_t *arg, int argc, char **argv)
             break;
         case 'o':
             arg->output_file = strdup(optarg);
+            if (arg->output_file == NULL)
+            {
+                return -1;
+            }
             break;
         default:
             return -1;
@@ -118,6 +139,10 @@ int arguments_parse(arguments_t *arg, int argc, char **argv)
     if (optind < argc)
     {
         arg->keyword = strdup(argv[optind]);
+        if (arg->keyword == NULL)
+        {
+            return -1;
+        }
 
         if (arg->case_sensitive == false)
         {
@@ -129,7 +154,10 @@ int arguments_parse(arguments_t *arg, int argc, char **argv)
 
     while (optind < argc)
     {
-        arguments_add_input_file(arg, argv[optind]);
+        if (arguments_add_input_file(arg, argv[optind]) == -1)
+        {
+            return -1;
+        }
 
         optind += 1;
     }

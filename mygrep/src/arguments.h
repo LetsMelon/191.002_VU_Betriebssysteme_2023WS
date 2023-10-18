@@ -20,7 +20,7 @@ void arguments_init(arguments_t *arg);
 void arguments_free(arguments_t *arg);
 void arguments_print(arguments_t *arg);
 
-void arguments_add_input_file(arguments_t *arg, char *file);
+int arguments_add_input_file(arguments_t *arg, char *file);
 int arguments_parse(arguments_t *arg, int argc, char **argv);
 
 #endif

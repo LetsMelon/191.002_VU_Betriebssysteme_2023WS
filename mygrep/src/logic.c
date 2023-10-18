@@ -29,10 +29,14 @@ int process_files(arguments_t *args)
     return 0;
 }
 
-void process_file(FILE *file, arguments_t *args)
+int process_file(FILE *file, arguments_t *args)
 {
     size_t len = 256;
     char *line = malloc(len * sizeof(char));
+    if (line == NULL)
+    {
+        return -1;
+    }
 
     while (getline(&line, &len, file) != -1)
     {
@@ -40,11 +44,17 @@ void process_file(FILE *file, arguments_t *args)
     }
 
     free(line);
+
+    return 0;
 }
 
 void process_line(const char *line, arguments_t *args)
 {
     char *current_line = strdup(line);
+    if (current_line == NULL)
+    {
+        return -1;
+    }
 
     char *result;
     if (args->case_sensitive)

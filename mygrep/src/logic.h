@@ -6,7 +6,7 @@
 #include "arguments.h"
 
 int process_files(arguments_t *args);
-void process_file(FILE *file, arguments_t *args);
+int process_file(FILE *file, arguments_t *args);
 void process_line(const char *line, arguments_t *args);
 
 #endif
