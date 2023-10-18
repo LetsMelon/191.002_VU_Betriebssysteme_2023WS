@@ -7,6 +7,8 @@
 #include "output.h"
 #include "logic.h"
 
+const char *USAGE = "SYNOPSIS\n\tmygrep[-i][-o outfile] keyword [file...]\n";
+
 int main(int argc, char **argv)
 {
     // mygrep [-i] [-o outfile] keyword [file...]
@@ -17,7 +19,8 @@ int main(int argc, char **argv)
 
     if (arguments_parse(&args, argc, argv) == -1)
     {
-        printf("Error occurred while trying to parse the arguments\n");
+        printf("%s", USAGE);
+        return EXIT_FAILURE;
     }
 
     if (args.output_file == NULL)
