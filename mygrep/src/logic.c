@@ -15,16 +15,13 @@ int process_files(arguments_t *args)
         char *file_path = args->input_files[i];
         FILE *file = fopen(file_path, "r");
 
-        char *line = NULL;
-        size_t len = 0;
-
         if (file == NULL)
         {
             perror("Failed to open the file");
             return 1;
         }
 
-        process_file(file, &args);
+        process_file(file, args);
 
         fclose(file);
     }
@@ -34,8 +31,8 @@ int process_files(arguments_t *args)
 
 void process_file(FILE *file, arguments_t *args)
 {
-    char *line;
-    size_t len = 0;
+    size_t len = 256;
+    char *line = malloc(len * sizeof(char ));
 
     while (getline(&line, &len, file) != -1)
     {
