@@ -3,7 +3,7 @@
 1 ./mygrep -o
 1 /mygrep
 0 echo -e "Systems, welcome\nto\noperating systems.\n" | ./mygrep "sys"
-not working 0 echo -e "Small\nis smaller\nthan huge." | ./mygrep -i "small"
+0 echo -e "Small\nis smaller\nthan huge." | ./mygrep -i "small"
 0 echo -e "Oh, z.,\nZZZzZ.\nz\nZ\nZZZz\nzZ...." | ./mygrep -i "Z."
 0 echo -e "new\nline" | ./mygrep ""
 0 ./mygrep -o outfile.txt 2 infile.txt
