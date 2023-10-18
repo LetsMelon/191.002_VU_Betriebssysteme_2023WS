@@ -87,13 +87,25 @@ void arguments_add_input_file(arguments_t *arg, char *file)
 
 int arguments_parse(arguments_t *arg, int argc, char **argv)
 {
+    if (argc < 3)
+    {
+        return -1;
+    }
+
     int opt;
+    int have_seen_i = 0;
+
     while ((opt = getopt(argc, argv, "io:")) != -1)
     {
         switch (opt)
         {
         case 'i':
+            if (have_seen_i > 0)
+            {
+                return -1;
+            }
             arg->case_sensitive = false;
+            have_seen_i += 1;
             break;
         case 'o':
             arg->output_file = strdup(optarg);
@@ -117,9 +129,7 @@ int arguments_parse(arguments_t *arg, int argc, char **argv)
 
     while (optind < argc)
     {
-        char *file = strdup(argv[optind]);
-
-        arguments_add_input_file(arg, file);
+        arguments_add_input_file(arg, argv[optind]);
 
         optind += 1;
     }
