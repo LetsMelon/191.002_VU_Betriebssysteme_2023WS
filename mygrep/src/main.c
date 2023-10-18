@@ -33,8 +33,14 @@ int main(int argc, char **argv)
     }
 
     arguments_print(&args);
-
-    process_files(&args);
+    if (args.input_files_num == 0)
+    {
+        process_file(stdin, &args);
+    }
+    else
+    {
+        process_files(&args);
+    }
 
     arguments_free(&args);
     output_free();

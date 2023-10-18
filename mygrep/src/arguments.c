@@ -87,7 +87,7 @@ void arguments_add_input_file(arguments_t *arg, char *file)
 
 int arguments_parse(arguments_t *arg, int argc, char **argv)
 {
-    if (argc < 3)
+    if (argc < 2)
     {
         return -1;
     }

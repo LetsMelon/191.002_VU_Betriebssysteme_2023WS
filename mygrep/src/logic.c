@@ -32,7 +32,7 @@ int process_files(arguments_t *args)
 void process_file(FILE *file, arguments_t *args)
 {
     size_t len = 256;
-    char *line = malloc(len * sizeof(char ));
+    char *line = malloc(len * sizeof(char));
 
     while (getline(&line, &len, file) != -1)
     {
