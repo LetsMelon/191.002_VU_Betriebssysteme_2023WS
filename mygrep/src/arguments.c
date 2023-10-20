@@ -7,6 +7,8 @@
 
 #include "arguments.h"
 
+int arguments_add_input_file(arguments_t *arg, char *file);
+
 void to_lowercase(char *str)
 {
     if (str == NULL)

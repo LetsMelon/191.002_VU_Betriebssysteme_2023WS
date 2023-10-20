@@ -33,7 +33,9 @@ int main(int argc, char **argv)
         }
     }
 
+    // TODO only if `-DDEBUG`
     arguments_print(&args);
+
     if (args.input_files_num == 0)
     {
         if (process_file(stdin, &args) != 0)
