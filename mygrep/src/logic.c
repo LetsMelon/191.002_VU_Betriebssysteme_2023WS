@@ -7,6 +7,8 @@
 #include "arguments.h"
 #include "output.h"
 
+int process_line(const char *line, arguments_t *args);
+
 int process_files(arguments_t *args)
 {
 

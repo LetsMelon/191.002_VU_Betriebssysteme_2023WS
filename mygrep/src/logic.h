@@ -7,6 +7,5 @@
 
 int process_files(arguments_t *args);
 int process_file(FILE *file, arguments_t *args);
-int process_line(const char *line, arguments_t *args);
 
 #endif
