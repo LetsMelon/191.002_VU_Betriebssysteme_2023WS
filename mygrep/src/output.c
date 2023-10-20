@@ -4,15 +4,19 @@
 
 #include "output.h"
 
+typedef enum OUTPUT_TYPE
+{
+    E_STDOUT,
+    E_FILE
+} output_type_e;
+
 static output_type_e output_type;
 static FILE *out_file = NULL;
 
-int output_init_stdout(void)
+void output_init_stdout(void)
 {
     output_type = E_STDOUT;
     out_file = stdout;
-
-    return 0;
 }
 
 int output_init_file(const char *file_path)
@@ -22,8 +26,7 @@ int output_init_file(const char *file_path)
     FILE *file = fopen(file_path, "w");
     if (file == NULL)
     {
-        perror("Failed to open the file");
-        return 1;
+        return -1;
     }
 
     out_file = file;
@@ -38,8 +41,10 @@ int output_printf(const char *format, ...)
 
     char modified_format[strlen(format) * 2 + 1];
     int j = 0;
-    for (int i = 0; format[i] != '\0'; i++) {
-        if (format[i] == '%') {
+    for (int i = 0; format[i] != '\0'; i++)
+    {
+        if (format[i] == '%')
+        {
             modified_format[j] = '%';
             j += 1;
         }
