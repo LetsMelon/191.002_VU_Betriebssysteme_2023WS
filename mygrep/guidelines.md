@@ -1,22 +1,22 @@
-- [ ] All source files of your program(s) must compile with ... without warnings and info messages and your program(s) must link without warnings.
+- [x] All source files of your program(s) must compile with ... without warnings and info messages and your program(s) must link without warnings.
 
-- [ ] There must be a Makefile implementing the targets: all to build the program(s) (i.e. generate executables) from the sources (this must be the first target in the Makefile); clean to delete all files that can be built from your sources with the Makefile.
+- [x] There must be a Makefile implementing the targets: all to build the program(s) (i.e. generate executables) from the sources (this must be the first target in the Makefile); clean to delete all files that can be built from your sources with the Makefile.
 
-- [ ] All targets of your Makefile must be idempotent. I.e. execution of make clean; make clean must yield the same result as make clean, and must not fail with an error.
+- [x] All targets of your Makefile must be idempotent. I.e. execution of make clean; make clean must yield the same result as make clean, and must not fail with an error.
 
-- [ ] The program shall operate according to the specification/assignment without major issues (e.g., segmentation fault, memory corruption).
+- [x] The program shall operate according to the specification/assignment without major issues (e.g., segmentation fault, memory corruption).
 
-- [ ] Arguments have to be parsed according to UNIX conventions ...
+- [x] Arguments have to be parsed according to UNIX conventions ...
 
-- [ ] Correct (=normal) termination, including a cleanup of resources.
+- [x] Correct (=normal) termination, including a cleanup of resources.
 
-- [ ] Upon success the program has to terminate with exit code 0, in case of errors with an exit code greater than 0. We recommend to use the macros `EXIT SUCCESS` and `EXIT FAILURE` (defined in `stdlib.h`) to enable portability of the program.
+- [x] Upon success the program has to terminate with exit code 0, in case of errors with an exit code greater than 0. We recommend to use the macros `EXIT SUCCESS` and `EXIT FAILURE` (defined in `stdlib.h`) to enable portability of the program.
 
 - [ ] If a function indicates an error with its return value, it should be checked in general. If the sub- sequent code depends on the successful execution of a function (e.g. resource allocation), then the return value must be checked.
 
-- [ ] Functions that do not take any parameters have to be declared with void in the signature, e.g., `int get_random_int(void)`;.
+- [x] Functions that do not take any parameters have to be declared with void in the signature, e.g., `int get_random_int(void)`;.
 
-- [ ]  Procedures (i.e., functions that do not return a value) have to be declared as void.
+- [x]  Procedures (i.e., functions that do not return a value) have to be declared as void.
 
 - [ ]  Error messages shall be written to stderr and should contain the program name argv[0].
 

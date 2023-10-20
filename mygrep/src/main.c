@@ -11,15 +11,12 @@ const char *USAGE = "SYNOPSIS\n\tmygrep[-i][-o outfile] keyword [file...]\n";
 
 int main(int argc, char **argv)
 {
-    // mygrep [-i] [-o outfile] keyword [file...]
-    // [0-9][A-Z][a-z].,:-!=?% and whitespace
-
     arguments_t args;
     arguments_init(&args);
 
     if (arguments_parse(&args, argc, argv) == -1)
     {
-        printf("%s", USAGE);
+        fprintf(stderr, "%s\n%s", argv[0], USAGE);
         return EXIT_FAILURE;
     }
 
@@ -31,7 +28,7 @@ int main(int argc, char **argv)
     {
         if (output_init_file(args.output_file) != 0)
         {
-            printf("Error while trying to initialize output file.\n");
+            fprintf(stderr, "%s\nError while trying to initialize output file.\n", argv[0]);
             return EXIT_FAILURE;
         }
     }
@@ -41,7 +38,7 @@ int main(int argc, char **argv)
     {
         if (process_file(stdin, &args) != 0)
         {
-            printf("Error while trying to read from stdin.\n");
+            fprintf(stderr, "%s\nError while trying to read from stdin.\n", argv[0]);
             return EXIT_FAILURE;
         }
     }
@@ -49,7 +46,7 @@ int main(int argc, char **argv)
     {
         if (process_files(&args) != 0)
         {
-            printf("Error while trying to read from the given files.\n");
+            fprintf(stderr, "%s\nError while trying to read from the given files.\n", argv[0]);
             return EXIT_FAILURE;
         }
     }
