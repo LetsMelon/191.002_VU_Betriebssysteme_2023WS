@@ -1,3 +1,4 @@
 forkFFT
+*.o
 main.*/
 main
