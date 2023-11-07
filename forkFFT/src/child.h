@@ -1,6 +1,8 @@
 #ifndef _c
 #define _c
 
+#include <complex.h>
+
 #define READ 0
 #define WRITE 1
 
