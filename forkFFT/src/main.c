@@ -94,149 +94,143 @@ int main(void)
         return EXIT_FAILURE;
     }
 
-    int parent_to_child1[2], child1_to_parent[2], parent_to_child2[2], child2_to_parent[2];
-    pipe(parent_to_child1);
-    pipe(child1_to_parent);
-    pipe(parent_to_child2);
-    pipe(child2_to_parent);
+    int parent_to_child_odd[2],
+        child_odd_to_parent[2],
+        parent_to_child_even[2],
+        child_even_to_parent[2];
 
-    pid_t p1 = fork();
-    if (p1 < 0)
+    pipe(parent_to_child_odd);
+    pipe(child_odd_to_parent);
+    pipe(parent_to_child_even);
+    pipe(child_even_to_parent);
+
+    pid_t p_odd = fork();
+    if (p_odd < 0)
     {
         cnl_free(&complex_list);
 
-        close_pipes(&parent_to_child1[0]);
-        close_pipes(&child1_to_parent[0]);
-        close_pipes(&parent_to_child2[0]);
-        close_pipes(&child2_to_parent[0]);
+        close_pipes(&parent_to_child_odd[0]);
+        close_pipes(&child_odd_to_parent[0]);
+        close_pipes(&parent_to_child_even[0]);
+        close_pipes(&child_even_to_parent[0]);
 
         return EXIT_FAILURE;
     }
-    else if (p1 == 0)
+    else if (p_odd == 0)
     {
-        close_pipes(&parent_to_child2[0]);
-        close_pipes(&child2_to_parent[0]);
+        close_pipes(&parent_to_child_even[0]);
+        close_pipes(&child_even_to_parent[0]);
 
-        create_child(&parent_to_child1[0], &child1_to_parent[0]);
+        create_child(&parent_to_child_odd[0], &child_odd_to_parent[0]);
 
         return EXIT_FAILURE;
     }
 
-    pid_t p2 = fork();
-    if (p2 < 0)
+    pid_t p_even = fork();
+    if (p_even < 0)
     {
         cnl_free(&complex_list);
 
-        close_pipes(&parent_to_child1[0]);
-        close_pipes(&child1_to_parent[0]);
-        close_pipes(&parent_to_child2[0]);
-        close_pipes(&child2_to_parent[0]);
+        close_pipes(&parent_to_child_odd[0]);
+        close_pipes(&child_odd_to_parent[0]);
+        close_pipes(&parent_to_child_even[0]);
+        close_pipes(&child_even_to_parent[0]);
 
         return EXIT_FAILURE;
     }
-    else if (p2 == 0)
+    else if (p_even == 0)
     {
-        close_pipes(&parent_to_child1[0]);
-        close_pipes(&child1_to_parent[0]);
+        close_pipes(&parent_to_child_odd[0]);
+        close_pipes(&child_odd_to_parent[0]);
 
-        create_child(&parent_to_child2[0], &child2_to_parent[0]);
+        create_child(&parent_to_child_even[0], &child_even_to_parent[0]);
 
         return EXIT_FAILURE;
     }
 
-    close(parent_to_child1[READ]);
-    close(parent_to_child2[READ]);
+    close(parent_to_child_odd[READ]);
+    close(parent_to_child_even[READ]);
 
-    close(child1_to_parent[WRITE]);
-    close(child2_to_parent[WRITE]);
+    close(child_odd_to_parent[WRITE]);
+    close(child_even_to_parent[WRITE]);
 
-    int fd_to_children[2] = {parent_to_child1[WRITE], parent_to_child2[WRITE]};
+    int fd_to_children[2] = {parent_to_child_even[WRITE], parent_to_child_odd[WRITE]};
     for (int i = 0; i < n; i++)
     {
         int fd_to_child = fd_to_children[i % 2];
 
         float complex n = cnl_get_at_index(&complex_list, i);
-        if (crealf(n) == NAN || cimagf(n) == NAN)
-        {
-            close(parent_to_child1[WRITE]);
-            close(parent_to_child2[WRITE]);
-
-            close(child1_to_parent[READ]);
-            close(child2_to_parent[READ]);
-
-            cnl_free(&complex_list);
-
-            return EXIT_FAILURE;
-        }
-
         dprintf(fd_to_child, "%.6f %.6f*i\n", crealf(n), cimagf(n));
     }
-    close(parent_to_child1[WRITE]);
-    close(parent_to_child2[WRITE]);
+    close(parent_to_child_odd[WRITE]);
+    close(parent_to_child_even[WRITE]);
 
     cnl_free(&complex_list);
 
-    int status1;
-    waitpid(p1, &status1, 0);
-    fprintf(stderr, "Fork status1: %d\n", WEXITSTATUS(status1));
+    int status_odd;
+    waitpid(p_odd, &status_odd, 0);
+    fprintf(stderr, "Fork status_odd: %d\n", WEXITSTATUS(status_odd));
 
-    int status2;
-    waitpid(p2, &status2, 0);
-    fprintf(stderr, "Fork status2: %d\n", WEXITSTATUS(status2));
+    int status_even;
+    waitpid(p_even, &status_even, 0);
+    fprintf(stderr, "Fork status_even: %d\n", WEXITSTATUS(status_even));
 
-    if ((WEXITSTATUS(status1) | WEXITSTATUS(status2)) != EXIT_SUCCESS)
+    if ((WEXITSTATUS(status_odd) | WEXITSTATUS(status_even)) != EXIT_SUCCESS)
     {
-        close(child1_to_parent[READ]);
-        close(child2_to_parent[READ]);
+        close(child_odd_to_parent[READ]);
+        close(child_even_to_parent[READ]);
 
         return EXIT_FAILURE;
     }
 
-    float complex *temp_left, *temp_right, *result;
-    temp_left = (float complex *)malloc((n / 2) * sizeof(float complex));
-    if (temp_left == NULL)
+    float complex *result_odd, *result_even, *result;
+    result_odd = (float complex *)malloc((n / 2) * sizeof(float complex));
+    if (result_odd == NULL)
     {
-        close(child1_to_parent[READ]);
-        close(child2_to_parent[READ]);
+        close(child_odd_to_parent[READ]);
+        close(child_even_to_parent[READ]);
 
         return EXIT_FAILURE;
     }
-    temp_right = (float complex *)malloc((n / 2) * sizeof(float complex));
-    if (temp_right == NULL)
+    result_even = (float complex *)malloc((n / 2) * sizeof(float complex));
+    if (result_even == NULL)
     {
-        close(child1_to_parent[READ]);
-        close(child2_to_parent[READ]);
+        close(child_odd_to_parent[READ]);
+        close(child_even_to_parent[READ]);
 
-        free(temp_left);
+        free(result_odd);
 
         return EXIT_FAILURE;
     }
 
-    c_read_n_complex_numbers_from_fd(child1_to_parent[READ], &temp_left[0], n / 2);
-    close(child1_to_parent[READ]);
+    c_read_n_complex_numbers_from_fd(child_odd_to_parent[READ], &result_odd[0], n / 2);
+    close(child_odd_to_parent[READ]);
 
-    c_read_n_complex_numbers_from_fd(child2_to_parent[READ], &temp_right[0], n / 2);
-    close(child2_to_parent[READ]);
+    c_read_n_complex_numbers_from_fd(child_even_to_parent[READ], &result_even[0], n / 2);
+    close(child_even_to_parent[READ]);
 
     result = (float complex *)malloc(n * sizeof(float complex));
     if (result == NULL)
     {
-        free(temp_left);
-        free(temp_right);
+        free(result_odd);
+        free(result_even);
 
         return EXIT_FAILURE;
     }
 
-    for (int i = 0; i < n / 2; i++)
+    for (int k = 0; k < n / 2; k++)
     {
-        float complex re = temp_left[i];
-        float complex rk = temp_right[i];
+        float complex re = result_even[k];
+        float complex ro = result_odd[k];
 
-        float complex middle_term = cosf(-(2.0 * PI) / (float)n) + I * sinf(-(2.0 * PI) / (float)n);
+        float complex middle_term = cosf((-(2.0 * PI) / (float)n) * (float)k) + I * sinf((-(2.0 * PI) / (float)n) * (float)k);
 
-        result[i] = re + middle_term * rk;
-        result[i + n / 2] = re - middle_term * rk;
+        result[k] = re + middle_term * ro;
+        result[k + n / 2] = re - middle_term * ro;
     }
+
+    free(result_odd);
+    free(result_even);
 
     fprintf(stderr, "n = %d\n", n);
 
@@ -246,8 +240,6 @@ int main(void)
         printf("\n");
     }
 
-    free(temp_left);
-    free(temp_right);
     free(result);
 
     return EXIT_SUCCESS;
