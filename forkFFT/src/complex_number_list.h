@@ -3,12 +3,11 @@
 
 #include <complex.h>
 
-typedef struct
-{
-    float complex *values;
+typedef struct {
+  float complex *values;
 
-    int num;
-    int capacity;
+  int num;
+  int capacity;
 } complex_number_list_t;
 
 int cnl_init(complex_number_list_t *list);

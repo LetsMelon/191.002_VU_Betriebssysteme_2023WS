@@ -1,8 +1,6 @@
 #ifndef _c
 #define _c
 
-#include "complex_number_list.h"
-
 #define READ 0
 #define WRITE 1
 
