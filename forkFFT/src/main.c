@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -6,11 +7,9 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include "math.h"
-
+#include "child.h"
 #include "complex_helper.h"
 #include "complex_number_list.h"
-#include "child.h"
 
 #define PI 3.141592654f
 

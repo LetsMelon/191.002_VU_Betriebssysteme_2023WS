@@ -5,7 +5,7 @@ RUN apt update \
     && apt install -y software-properties-common \
     && add-apt-repository ppa:maveonair/helix-editor \
     && apt update \
-    && apt install -y gdb gcc make curl helix valgrind \
+    && apt install -y gdb gcc make curl helix valgrind nano man \
     && curl https://sh.rustup.rs -sSf | sh -s -- -y
 
 ENV PATH=$PATH:/root/.cargo/bin/

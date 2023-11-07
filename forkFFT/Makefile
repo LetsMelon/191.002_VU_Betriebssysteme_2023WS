@@ -4,11 +4,11 @@ CFLAGS = -Wall -g -std=c99 -pedantic $(DEFS)
 
 OBJECTS = main.o complex_number_list.o complex_helper.o child.o
 
-.PHONY: all clean
+.PHONY: all clean .FORCE build-container run-container check-memory-leaks
 all: forkFFT
 
 forkFFT: $(OBJECTS)
-	$(CC) $(LDFLAGS) -o $@ $^
+	$(CC) $(LDFLAGS) -o $@ $^ -lm
 
 %.o: ./src/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -20,3 +20,20 @@ child.o: ./src/child.c
 
 clean:
 	rm -rf *.o forkFFT
+
+build-container: .FORCE
+	docker build -t uni_bet_forkfft:latest .
+
+run-container: build-container
+	docker run --rm -it uni_bet_forkfft:latest
+
+check-memory-leaks: forkFFT
+	valgrind \
+		--leak-check=full \
+    	--show-leak-kinds=all \
+    	--track-origins=yes \
+    	--verbose \
+    	--log-file=valgrind-out-sine.txt \
+    	./forkFFT < ./test/sine.txt
+
+.FORCE:
