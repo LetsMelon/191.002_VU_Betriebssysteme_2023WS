@@ -27,11 +27,13 @@ build-container: .FORCE
 run-container: build-container
 	docker run --rm -it uni_bet_forkfft:latest
 
-check-memory-leaks: forkFFT
+check-valgrind: forkFFT
 	valgrind \
 		--leak-check=full \
     	--show-leak-kinds=all \
     	--track-origins=yes \
+		--track-fds=yes \
+		--trace-children=yes \
     	--verbose \
     	--log-file=valgrind-out-sine.txt \
     	./forkFFT < ./test/sine.txt
