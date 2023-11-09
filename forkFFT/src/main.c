@@ -13,9 +13,24 @@
 
 #define PI 3.141592654f
 
-int main(void) {
+const char *USAGE = "SYNOPSIS\n\tforkFFT [-p]";
+
+int main(int argc, char **argv) {
   // TODO read flag from the command line arguments
-  ch_init_output(true);
+  int opt;
+  bool precise_flag = false;
+  while ((opt = getopt(argc, argv, "p")) != -1) {
+    switch (opt) {
+    case 'p':
+      precise_flag = true;
+      break;
+    default:
+      printf("%s\n", USAGE);
+      return EXIT_FAILURE;
+    }
+  }
+
+  ch_init_output(precise_flag);
 
   complex_number_list_t complex_list;
   if (cnl_init(&complex_list) != 0) {
