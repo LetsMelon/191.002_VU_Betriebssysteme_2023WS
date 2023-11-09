@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -16,7 +17,6 @@
 const char *USAGE = "SYNOPSIS\n\tforkFFT [-p]";
 
 int main(int argc, char **argv) {
-  // TODO read flag from the command line arguments
   int opt;
   bool precise_flag = false;
   while ((opt = getopt(argc, argv, "p")) != -1) {
@@ -46,6 +46,10 @@ int main(int argc, char **argv) {
   while (getline(&line, &len, stdin) != -1) {
     char *input = line;
     float complex number = 0.0f;
+
+    if (!(isdigit(input[0]) != 0 || input[0] == '+' || input[1] == '-')) {
+      return EXIT_FAILURE;
+    }
 
     for (int i = 0; i < 2; ++i) {
       char *endptr = NULL;
