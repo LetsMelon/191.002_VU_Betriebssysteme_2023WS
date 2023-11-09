@@ -4,7 +4,7 @@ CFLAGS = -Wall -g -std=c99 -pedantic $(DEFS)
 
 OBJECTS = main.o arguments.o output.o logic.o
 
-.PHONY: all clean
+.PHONY: all clean package
 all: mygrep
 
 mygrep: $(OBJECTS)
@@ -19,4 +19,7 @@ output.o: ./src/output.c
 logic.o: ./src/logic.c
 
 clean:
-	rm -rf *.o mygrep
+	rm -rf *.o mygrep melcher_mygrep.tar.gz
+
+package:
+	tar -cvzf melcher_mygrep.tar.gz ./Makefile ./src/arguments.c ./src/arguments.h ./src/logic.c ./src/logic.h ./src/main.c ./src/output.c ./src/output.h

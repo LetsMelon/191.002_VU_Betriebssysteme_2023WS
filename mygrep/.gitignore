@@ -5,3 +5,7 @@ main*/
 main
 output.txt
 .vscode/
+doc/
+html/
+latex/
+*.tar.gz
