@@ -4,7 +4,7 @@ CFLAGS = -Wall -g -std=c99 -pedantic $(DEFS)
 
 OBJECTS = main.o complex_number_list.o complex_helper.o child.o
 
-.PHONY: all clean .FORCE build-container run-container check-memory-leaks
+.PHONY: all clean .FORCE build-container run-container check-memory-leaks package
 all: forkFFT
 
 forkFFT: $(OBJECTS)
@@ -19,7 +19,7 @@ complex_helper.o: ./src/complex_helper.c
 child.o: ./src/child.c
 
 clean:
-	rm -rf *.o forkFFT
+	rm -rf *.o forkFFT melcher_forkfft.tar.gz
 
 build-container: .FORCE
 	docker build -t uni_bet_forkfft:latest .
@@ -37,5 +37,8 @@ check-valgrind: forkFFT
     	--verbose \
     	--log-file=valgrind-out-sine.txt \
     	./forkFFT < ./test/sine.txt
+
+package:
+	tar -cvzf melcher_forkfft.tar.gz ./Makefile ./src
 
 .FORCE:
