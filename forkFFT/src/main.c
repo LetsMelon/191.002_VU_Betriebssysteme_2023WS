@@ -173,11 +173,14 @@ int main(int argc, char **argv) {
 
   int status_odd;
   waitpid(p_odd, &status_odd, 0);
-  fprintf(stderr, "Fork status_odd: %d\n", WEXITSTATUS(status_odd));
 
   int status_even;
   waitpid(p_even, &status_even, 0);
+
+#ifdef DDEBUG
+  fprintf(stderr, "Fork status_odd: %d\n", WEXITSTATUS(status_odd));
   fprintf(stderr, "Fork status_even: %d\n", WEXITSTATUS(status_even));
+#endif
 
   if ((WEXITSTATUS(status_odd) | WEXITSTATUS(status_even)) != EXIT_SUCCESS) {
     close(child_odd_to_parent[READ]);
@@ -234,7 +237,9 @@ int main(int argc, char **argv) {
   free(result_odd);
   free(result_even);
 
+#ifdef DDEBUG
   fprintf(stderr, "n = %d\n", n);
+#endif
 
   for (int i = 0; i < n; ++i) {
     ch_print_complex_number(result[i]);

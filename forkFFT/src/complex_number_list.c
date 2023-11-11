@@ -58,6 +58,7 @@ int cnl_add(complex_number_list_t *list, float complex number) {
 }
 
 void cnl_print(complex_number_list_t *list) {
+#ifdef DDEBUG
   fprintf(stderr, "ComplexNumberList {\n");
 
   fprintf(stderr, "\tnum: %i\n", list->num);
@@ -78,6 +79,7 @@ void cnl_print(complex_number_list_t *list) {
   fprintf(stderr, "\t]\n");
 
   fprintf(stderr, "}\n");
+#endif
 }
 
 float complex cnl_get_at_index(complex_number_list_t *list, int index) {
