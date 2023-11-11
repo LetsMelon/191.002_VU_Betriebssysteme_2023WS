@@ -2,7 +2,7 @@ CC = gcc
 DEFS = -D_BSD_SOURCE -D_SVID_SOURCE -D_POSIX_C_SOURCE=200809L
 CFLAGS = -Wall -g -std=c99 -pedantic $(DEFS)
 
-OBJECTS = main.o complex_number_list.o complex_helper.o child.o
+OBJECTS = main.o complex_number_list.o complex_helper.o child.o parser.o
 
 .PHONY: all clean .FORCE build-container run-container check-memory-leaks package
 all: forkFFT
@@ -17,6 +17,7 @@ main.o: ./src/main.c
 complex_number_list.o: ./src/complex_number_list.c
 complex_helper.o: ./src/complex_helper.c
 child.o: ./src/child.c
+parser.o: ./src/parser.c
 
 clean:
 	rm -rf *.o forkFFT melcher_forkfft.tar.gz

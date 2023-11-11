@@ -11,6 +11,7 @@
 #include "child.h"
 #include "complex_helper.h"
 #include "complex_number_list.h"
+#include "parser.h"
 
 #define PI 3.141592654f
 
@@ -44,32 +45,29 @@ int main(int argc, char **argv) {
   }
 
   while (getline(&line, &len, stdin) != -1) {
+    string_list_t list;
     char *input = line;
+
+    if (p_split_at(input, ' ', &list) != 0) {
+        sl_free(&list);
+
+        return EXIT_FAILURE;
+    }
+
     float complex number = 0.0f;
 
-    if (!(isdigit(input[0]) != 0 || input[0] == '+' || input[1] == '-')) {
-      return EXIT_FAILURE;
+    if (p_parse_as_complex_float(&list, &number) != 0) {
+        sl_free(&list);
+
+        return EXIT_FAILURE;
     }
 
-    for (int i = 0; i < 2; ++i) {
-      char *endptr = NULL;
-
-      float n = strtof(input, &endptr);
-      if (i == 0) {
-        number += n;
-      } else {
-        number += n * I;
-      }
-
-      if (endptr == NULL)
-        break;
-
-      input = endptr;
-    }
+    sl_free(&list);
 
     if (cnl_add(&complex_list, number) != 0) {
       free(line);
       cnl_free(&complex_list);
+
       return EXIT_FAILURE;
     }
   }
