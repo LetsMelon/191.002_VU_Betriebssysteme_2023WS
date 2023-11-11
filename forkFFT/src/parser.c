@@ -24,6 +24,7 @@ void sl_free(string_list_t *list) {
   for (int i = 0; i < list->num; i += 1) {
     free(list->values[i]);
   }
+  free(list->values);
 
   list->num = 0;
   list->capacity = 0;

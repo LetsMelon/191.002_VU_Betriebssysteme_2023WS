@@ -48,20 +48,27 @@ int main(int argc, char **argv) {
     string_list_t list;
     char *input = line;
 
-    if (p_split_at(input, ' ', &list) != 0) {
-        sl_free(&list);
+    if (strlen(input) > 0 && input[0] == '\n') {
+      free(line);
 
-        return EXIT_FAILURE;
+      return EXIT_FAILURE;
+    }
+
+    if (p_split_at(input, ' ', &list) != 0) {
+      sl_free(&list);
+      free(line);
+
+      return EXIT_FAILURE;
     }
 
     float complex number = 0.0f;
 
     if (p_parse_as_complex_float(&list, &number) != 0) {
-        sl_free(&list);
+      sl_free(&list);
+      free(line);
 
-        return EXIT_FAILURE;
+      return EXIT_FAILURE;
     }
-
     sl_free(&list);
 
     if (cnl_add(&complex_list, number) != 0) {
