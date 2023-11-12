@@ -47,6 +47,6 @@ check-valgrind: forkFFT
     	./forkFFT < ./test/sine.txt
 
 package:
-	tar -cvzf melcher_forkfft.tar.gz ./Makefile ./src
+	tar -cvzf melcher_forkfft.tar.gz ./Makefile ./src ./doc
 
 .FORCE:
