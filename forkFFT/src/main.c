@@ -1,3 +1,13 @@
+/**
+ * @file main.c
+ * @author Domenic Melcher <e12220857@student.tuwien.ac.at>
+ * @date 12.11.2023
+ *
+ * @brief Main program module.
+ *
+ * ForkFFT
+ **/
+
 #include <ctype.h>
 #include <math.h>
 #include <stdbool.h>
@@ -13,10 +23,24 @@
 #include "complex_number_list.h"
 #include "parser.h"
 
+/*! \def PI
+    \brief Returns an approximation of the value PI.
+
+    This value is used in the fft calculation.
+*/
 #define PI 3.141592654f
 
-const char *USAGE = "SYNOPSIS\n\tforkFFT [-p]";
+const char *USAGE =
+    "SYNOPSIS\n\tforkFFT [-p]"; /**< Usage message for this program */
 
+/**
+ * Program entry point.
+ * @brief The program starts here.
+ * @details The program starts here.
+ * @param argc The argument counter.
+ * @param argv The argument vector.
+ * @return Returns EXIT_SUCCESS.
+ */
 int main(int argc, char **argv) {
   int opt;
   bool precise_flag = false;

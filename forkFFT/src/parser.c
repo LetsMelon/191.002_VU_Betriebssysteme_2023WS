@@ -6,6 +6,9 @@
 
 #include "parser.h"
 
+/**
+ * @brief Helper function to initialise a string_list_t.
+ */
 static int sl_init(string_list_t *list) {
   list->capacity = 16;
 
@@ -30,6 +33,9 @@ void sl_free(string_list_t *list) {
   list->capacity = 0;
 }
 
+/**
+ * @brief Helper function to add an item to the given list.
+ */
 static int sl_add(string_list_t *list, char *value) {
   if (list->capacity == 0) {
     if (sl_init(list) != 0) {
@@ -132,6 +138,7 @@ int p_split_at(char *input, char pattern, string_list_t *list) {
 }
 
 static bool p_has_complex_number_chars(char *input) {
+  // Allowed chars for an complex float
   char *possible_values = "0123456789.+-*i \n";
 
   bool has_all_chars = true;
@@ -163,6 +170,7 @@ int p_parse_as_complex_float(string_list_t *list, float complex *n) {
   for (int i = 0; i < list->num; i += 1) {
     char *inp = list->values[i];
 
+    // Checks if inp only has allowed chars
     if (p_has_complex_number_chars(inp) != true) {
       return -1;
     }

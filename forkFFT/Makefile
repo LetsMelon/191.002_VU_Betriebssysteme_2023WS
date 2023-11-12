@@ -1,3 +1,7 @@
+# @file Makefile
+# @author Domenic Melcher <e12220857@student.tuwien.ac.at>
+# Makefile for forkFFT
+
 CC = gcc
 DEFS = -D_BSD_SOURCE -D_SVID_SOURCE -D_POSIX_C_SOURCE=200809L
 CFLAGS = -Wall -g -std=c99 -pedantic $(DEFS)
@@ -20,7 +24,10 @@ child.o: ./src/child.c
 parser.o: ./src/parser.c
 
 clean:
-	rm -rf *.o forkFFT melcher_forkfft.tar.gz
+	rm -rf *.o forkFFT melcher_forkfft.tar.gz ./html ./latex
+
+doc: .FORCE
+	doxygen ./doc/Doxyfile
 
 build-container: .FORCE
 	docker build -t uni_bet_forkfft:latest .
