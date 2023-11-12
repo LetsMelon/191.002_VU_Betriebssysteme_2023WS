@@ -1,17 +1,16 @@
 #ifndef ARGUMENTS_H
 #define ARGUMENTS_H
 
-typedef struct arguments
-{
-    char *output_file;
+typedef struct arguments {
+  char *output_file;
 
-    char *keyword;
+  char *keyword;
 
-    bool case_sensitive;
+  bool case_sensitive;
 
-    char **input_files;
-    int input_files_num;
-    int input_files_capacity;
+  char **input_files;
+  int input_files_num;
+  int input_files_capacity;
 } arguments_t;
 
 void to_lowercase(char *str);
