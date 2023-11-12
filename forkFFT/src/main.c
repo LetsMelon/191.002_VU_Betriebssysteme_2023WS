@@ -39,7 +39,7 @@ const char *USAGE =
  * @details The program starts here.
  * @param argc The argument counter.
  * @param argv The argument vector.
- * @return Returns EXIT_SUCCESS.
+ * @return Returns EXIT_SUCCESS if no error occurred while running.
  */
 int main(int argc, char **argv) {
   int opt;
