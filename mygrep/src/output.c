@@ -1,12 +1,30 @@
+/**
+ * @file output.c
+ * @author Domenic Melcher <e12220857@student.tuwien.ac.at>
+ * @date 12.11.2023
+ *
+ * @brief Provides utility functions to write to the correct output (stdout or a
+ * file)
+ */
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "output.h"
 
+/**
+ * @brief Internal enum to store the output type.
+ */
 typedef enum OUTPUT_TYPE { E_STDOUT, E_FILE } output_type_e;
 
+/**
+ * The output type.
+ */
 static output_type_e output_type;
+/**
+ * The file to write to.
+ */
 static FILE *out_file = NULL;
 
 void output_init_stdout(void) {

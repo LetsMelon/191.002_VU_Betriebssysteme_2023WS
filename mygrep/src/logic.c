@@ -1,3 +1,11 @@
+/**
+ * @file logic.c
+ * @author Domenic Melcher <e12220857@student.tuwien.ac.at>
+ * @date 12.11.2023
+ *
+ * @brief Provides utility functions to process files.
+ */
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,7 +18,6 @@
 int process_line(const char *line, arguments_t *args);
 
 int process_files(arguments_t *args) {
-
   for (int i = 0; i < args->input_files_num; i++) {
     char *file_path = args->input_files[i];
     FILE *file = fopen(file_path, "r");

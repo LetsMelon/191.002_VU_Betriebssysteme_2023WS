@@ -1,3 +1,11 @@
+/**
+ * @file arguments.c
+ * @author Domenic Melcher <e12220857@student.tuwien.ac.at>
+ * @date 12.11.2023
+ *
+ * @brief Provides utility functions to store the executable arguments.
+ */
+
 #include <ctype.h>
 #include <getopt.h>
 #include <stdbool.h>
@@ -13,7 +21,7 @@ void to_lowercase(char *str) {
   if (str == NULL)
     return;
 
-  for (int i = 0; i < strlen(str); i++) {
+  for (int i = 0; i < strlen(str); i += 1) {
     str[i] = tolower(str[i]);
   }
 }
@@ -31,13 +39,20 @@ void arguments_init(arguments_t *arg) {
 }
 
 void arguments_free(arguments_t *arg) {
-  free(arg->output_file);
-  free(arg->keyword);
-
-  for (int i = 0; i < arg->input_files_num; i += 1) {
-    free(arg->input_files[i]);
+  if (arg->output_file != NULL) {
+    free(arg->output_file);
   }
-  free(arg->input_files);
+
+  if (arg->keyword != NULL) {
+    free(arg->keyword);
+  }
+
+  if (arg->input_files != NULL) {
+    for (int i = 0; i < arg->input_files_num; i += 1) {
+      free(arg->input_files[i]);
+    }
+    free(arg->input_files);
+  }
   arg->input_files_num = 0;
   arg->input_files_capacity = 0;
 }
@@ -62,6 +77,7 @@ void arguments_print(arguments_t *arg) {
 
 int arguments_add_input_file(arguments_t *arg, char *file) {
   if (arg->input_files == NULL || arg->input_files_capacity == 0) {
+    // default capacity
     arg->input_files_capacity = 8;
     arg->input_files_num = 0;
 

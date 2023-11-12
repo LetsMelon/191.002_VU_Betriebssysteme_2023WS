@@ -1,3 +1,13 @@
+/**
+ * @file main.c
+ * @author Domenic Melcher <e12220857@student.tuwien.ac.at>
+ * @date 12.11.2023
+ *
+ * @brief Main program module.
+ *
+ * mygrep
+ **/
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,8 +17,19 @@
 #include "logic.h"
 #include "output.h"
 
-const char *USAGE = "SYNOPSIS\n\tmygrep[-i][-o outfile] keyword [file...]\n";
+const char *USAGE =
+    "SYNOPSIS\n\tmygrep[-i][-o outfile] keyword [file...]\n"; /**< Usage message
+                                                                 for this
+                                                                 program */
 
+/**
+ * Program entry point.
+ * @brief The program starts here.
+ * @details The program starts here.
+ * @param argc The argument counter.
+ * @param argv The argument vector.
+ * @return Returns EXIT_SUCCESS if no error occurred while running.
+ */
 int main(int argc, char **argv) {
   arguments_t args;
   arguments_init(&args);
@@ -28,7 +49,6 @@ int main(int argc, char **argv) {
     }
   }
 
-  // TODO only if `-DDEBUG`
   // arguments_print(&args);
 
   if (args.input_files_num == 0) {
