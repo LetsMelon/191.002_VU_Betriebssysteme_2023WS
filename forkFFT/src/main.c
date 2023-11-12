@@ -118,17 +118,17 @@ int main(int argc, char **argv) {
   if (p_odd < 0) {
     cnl_free(&complex_list);
 
-    close_pipes(&parent_to_child_odd[0]);
-    close_pipes(&child_odd_to_parent[0]);
-    close_pipes(&parent_to_child_even[0]);
-    close_pipes(&child_even_to_parent[0]);
+    c_close_pipes(&parent_to_child_odd[0]);
+    c_close_pipes(&child_odd_to_parent[0]);
+    c_close_pipes(&parent_to_child_even[0]);
+    c_close_pipes(&child_even_to_parent[0]);
 
     return EXIT_FAILURE;
   } else if (p_odd == 0) {
-    close_pipes(&parent_to_child_even[0]);
-    close_pipes(&child_even_to_parent[0]);
+    c_close_pipes(&parent_to_child_even[0]);
+    c_close_pipes(&child_even_to_parent[0]);
 
-    create_child(&parent_to_child_odd[0], &child_odd_to_parent[0]);
+    c_create_child(&parent_to_child_odd[0], &child_odd_to_parent[0]);
 
     return EXIT_FAILURE;
   }
@@ -137,17 +137,17 @@ int main(int argc, char **argv) {
   if (p_even < 0) {
     cnl_free(&complex_list);
 
-    close_pipes(&parent_to_child_odd[0]);
-    close_pipes(&child_odd_to_parent[0]);
-    close_pipes(&parent_to_child_even[0]);
-    close_pipes(&child_even_to_parent[0]);
+    c_close_pipes(&parent_to_child_odd[0]);
+    c_close_pipes(&child_odd_to_parent[0]);
+    c_close_pipes(&parent_to_child_even[0]);
+    c_close_pipes(&child_even_to_parent[0]);
 
     return EXIT_FAILURE;
   } else if (p_even == 0) {
-    close_pipes(&parent_to_child_odd[0]);
-    close_pipes(&child_odd_to_parent[0]);
+    c_close_pipes(&parent_to_child_odd[0]);
+    c_close_pipes(&child_odd_to_parent[0]);
 
-    create_child(&parent_to_child_even[0], &child_even_to_parent[0]);
+    c_create_child(&parent_to_child_even[0], &child_even_to_parent[0]);
 
     return EXIT_FAILURE;
   }

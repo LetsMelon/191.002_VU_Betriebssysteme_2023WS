@@ -5,10 +5,7 @@
 
 #include "child.h"
 
-int close_pipes(int *pipes);
-void create_child(int *pipe_stdin, int *pipe_stdout);
-
-int close_pipes(int *pipes) {
+int c_close_pipes(int *pipes) {
   for (int i = 0; i < 2; i++) {
     if (close(pipes[i]) != 0) {
       fprintf(stderr, "Error when closing pipe %d at index %d.\n", pipes[i], i);
@@ -19,15 +16,15 @@ int close_pipes(int *pipes) {
   return 0;
 }
 
-void create_child(int *pipe_stdin, int *pipe_stdout) {
+void c_create_child(int *pipe_stdin, int *pipe_stdout) {
   dup2(pipe_stdin[READ], STDIN_FILENO);
-  if (close_pipes(pipe_stdin) != 0) {
+  if (c_close_pipes(pipe_stdin) != 0) {
     fprintf(stderr, "Error in closing pipes 'pipe_stdin'.\n");
     exit(EXIT_FAILURE);
   }
 
   dup2(pipe_stdout[WRITE], STDOUT_FILENO);
-  if (close_pipes(pipe_stdout) != 0) {
+  if (c_close_pipes(pipe_stdout) != 0) {
     fprintf(stderr, "Error in closing pipes 'pipe_stdout'.\n");
     exit(EXIT_FAILURE);
   }

@@ -1,8 +1,8 @@
 #ifndef P_
 #define P_
 
-#include <stdbool.h>
 #include <complex.h>
+#include <stdbool.h>
 
 typedef struct {
   char **values;
