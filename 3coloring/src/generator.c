@@ -2,8 +2,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <string.h>
+#include <time.h>
 
 #include "edge.h"
 #include "matrix.h"
@@ -11,6 +11,15 @@
 
 static char *USAGE = "SYNOPSIS\n\tgenerator EDGE1...\nEXAMPLE\n\tgenerator 0-1 "
                      "0-2 0-3 1-2 1-3 2-3\n";
+
+/*
+$ ./generator 0-1 0-5 1-3
+Seed: 216039000
+0-1
+0-0 // ?
+5-0
+3-1
+*/
 
 int main(int argc, char **argv) {
   struct timespec ts;
@@ -21,26 +30,26 @@ int main(int argc, char **argv) {
 
   int input_len = 0;
   for (int i = 1; i < argc; i += 1) {
-      input_len += strlen(argv[i]);
-      if (i + 1 < argc) {
-          input_len += 1;
-      }
+    input_len += strlen(argv[i]);
+    if (i + 1 < argc) {
+      input_len += 1;
+    }
   }
 
-  char *input_concat = (char*) malloc(sizeof(char) * (input_len + 1));
+  char *input_concat = (char *)malloc(sizeof(char) * (input_len + 1));
   if (input_concat == NULL) {
-      return EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
   int already_copied = 0;
   for (int i = 1; i < argc; i += 1) {
-      char *argv_i = argv[i];
+    char *argv_i = argv[i];
 
-      strcpy(input_concat + already_copied, argv_i);
-      already_copied += strlen(argv_i);
+    strcpy(input_concat + already_copied, argv_i);
+    already_copied += strlen(argv_i);
 
-      input_concat[already_copied] = ' ';
-      already_copied += 1;
+    input_concat[already_copied] = ' ';
+    already_copied += 1;
   }
 
   input_concat[input_len] = '\0';

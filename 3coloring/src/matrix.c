@@ -64,13 +64,13 @@ void m_am_print(adjacent_matrix_t *adjacent_matrix) {
 }
 
 static int m_graph_get_index_from_node(graph_t *graph, int id) {
-    for (int i = 0; i < graph->nodes_count; ++i) {
-        if (graph->nodes[i].id == id) {
-            return i;
-        }
+  for (int i = 0; i < graph->nodes_count; ++i) {
+    if (graph->nodes[i].id == id) {
+      return i;
     }
+  }
 
-    return -1;
+  return -1;
 }
 
 int m_graph_init(graph_t *graph, edge_t *edges, int edges_count) {
@@ -125,7 +125,7 @@ int m_graph_init(graph_t *graph, edge_t *edges, int edges_count) {
     int n2_index = m_graph_get_index_from_node(graph, e.node2);
 
     if (n1_index < 0 || n2_index < 0) {
-        return -1;
+      return -1;
     }
 
     graph->edges.data[n1_index][n2_index] = 1;
@@ -161,7 +161,14 @@ int m_graph_get_same_color_edges(graph_t *graph, int u, edge_t **neighbors) {
     return -1;
   }
 
-  int *u_neighbors = graph->edges.data[m_graph_get_index_from_node(graph, u)];
+  int u_index = m_graph_get_index_from_node(graph, u);
+  if (u_index < 0) {
+    free(neighbors);
+
+    return -1;
+  }
+
+  int *u_neighbors = graph->edges.data[u_index];
   int found_neighbors = 0;
   for (int i = 0; i < graph->nodes_count; i += 1) {
     nodes_t neighbor_node = graph->nodes[i];
@@ -193,7 +200,7 @@ void m_graph_remove_edge(graph_t *graph, edge_t *edge) {
   int n2_index = m_graph_get_index_from_node(graph, edge->node2);
 
   if (n1_index < 0 || n2_index < 0) {
-      return;
+    return;
   }
 
   graph->edges_count -= 2;
