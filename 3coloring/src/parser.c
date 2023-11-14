@@ -1,0 +1,184 @@
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "edge.h"
+#include "parser.h"
+
+/**
+ * @brief Helper function to initialise a string_list_t.
+ */
+static int sl_init(string_list_t *list) {
+  list->capacity = 16;
+
+  list->values = (char **)malloc(list->capacity * sizeof(char *));
+  if (list->values == NULL) {
+    list->capacity = 0;
+    return -1;
+  }
+
+  list->num = 0;
+
+  return 0;
+}
+
+void sl_free(string_list_t *list) {
+  for (int i = 0; i < list->num; i += 1) {
+    free(list->values[i]);
+  }
+  free(list->values);
+
+  list->num = 0;
+  list->capacity = 0;
+}
+
+/**
+ * @brief Helper function to add an item to the given list.
+ */
+int sl_add(string_list_t *list, char *value) {
+  if (list->capacity == 0) {
+    if (sl_init(list) != 0) {
+      return -1;
+    }
+  }
+
+  if (list->num >= list->capacity) {
+    list->capacity = list->capacity * 3 / 2;
+
+    char **og_values = list->values;
+    list->values =
+        (char **)realloc(list->values, list->capacity * sizeof(char *));
+    if (list->values == NULL) {
+      free(og_values);
+      return -1;
+    }
+  }
+
+  list->values[list->num] = strdup(value);
+
+  list->num += 1;
+
+  return 0;
+}
+
+void sl_print(string_list_t *list) {
+  // #ifdef DDEBUG
+  printf("string_list_t {\n");
+  printf("\tnum: %d,\n", list->num);
+  printf("\tcapacity: %d,\n", list->capacity);
+  printf("\tvalues: [");
+
+  for (int i = 0; i < list->num; i += 1) {
+    printf("'%s'", list->values[i]);
+
+    if ((i + 1) < list->num)
+      printf(", ");
+  }
+
+  printf("]\n}\n");
+  // #endif
+}
+
+int p_split_at(char *input, char pattern, string_list_t *list) {
+  if (sl_init(list) != 0) {
+    return -1;
+  }
+
+  int input_len = strlen(input);
+  if (input_len == 0) {
+    return 0;
+  }
+
+  int last_split = 0;
+  for (int i = 0; i < input_len; i += 1) {
+    if (input[i] == pattern) {
+      if (last_split == i) {
+        last_split = i + 1;
+        continue;
+      }
+
+      int copy_len = i - last_split;
+      char *tmp = (char *)malloc(sizeof(char) * (copy_len + 1));
+      if (tmp == NULL) {
+        return -1;
+      }
+
+      strncpy(tmp, input + sizeof(char) * last_split, copy_len);
+      tmp[copy_len] = '\0';
+      if (sl_add(list, tmp) != 0) {
+        free(tmp);
+        return -1;
+      }
+      free(tmp);
+
+      last_split = i + 1;
+    }
+  }
+
+  int copy_len = input_len - last_split;
+  if (copy_len < 1) {
+    return 0;
+  }
+
+  char *tmp = (char *)malloc(sizeof(char) * (copy_len + 1));
+  if (tmp == NULL) {
+    return -1;
+  }
+
+  strncpy(tmp, input + sizeof(char) * last_split, copy_len);
+  tmp[copy_len] = '\0';
+  if (sl_add(list, tmp) != 0) {
+    free(tmp);
+    return -1;
+  }
+  free(tmp);
+
+  return 0;
+}
+
+int p_parse_as_int(char *input, int *value) {
+  // TODO add test to check if input is an int or not.
+  int v = 0;
+
+  for (int i = strlen(input) - 1; i >= 0; i -= 1) {
+    char current_char = input[i];
+
+    v += (int)(current_char - '0') * (int)pow(10, i);
+  }
+
+  *value = v;
+
+  return 0;
+}
+
+int p_parse_as_edge(char *input, edge_t *edge) {
+  string_list_t edge_pair;
+
+  if (p_split_at(input, '-', &edge_pair) != 0) {
+    return -1;
+  }
+
+  if (edge_pair.num != 2) {
+    return -1;
+  }
+
+  int node1, node2;
+
+  if (p_parse_as_int(edge_pair.values[0], &node1) != 0) {
+    sl_free(&edge_pair); 
+    return -1;
+  }
+
+  if (p_parse_as_int(edge_pair.values[1], &node2) != 0) {
+    sl_free(&edge_pair);
+    return -1;
+  }
+
+  edge_t e = {.node1 = node1, .node2 = node2};
+  *edge = e;
+
+  sl_free(&edge_pair);
+
+  return 0;
+}

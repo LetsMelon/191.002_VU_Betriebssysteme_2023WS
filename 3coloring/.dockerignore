@@ -1,0 +1,8 @@
+forkFFT
+*.o
+main.*/
+main
+**.DS_Store
+.idea/
+html/
+latex/
