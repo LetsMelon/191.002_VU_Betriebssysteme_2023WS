@@ -135,7 +135,13 @@ int m_graph_init(graph_t *graph, edge_t *edges, int edges_count) {
   return 0;
 }
 
-void m_graph_free(graph_t *graph) { am_free(&graph->edges); }
+void m_graph_free(graph_t *graph) {
+  am_free(&graph->edges);
+  free(graph->nodes);
+
+  graph->edges_count = 0;
+  graph->nodes_count = 0;
+}
 
 static int m_graph_find_node(graph_t *graph, int id, nodes_t *node) {
   for (int i = 0; i < graph->nodes_count; i++) {
@@ -156,15 +162,11 @@ int m_graph_get_same_color_edges(graph_t *graph, int u, edge_t **neighbors) {
 
   nodes_t node;
   if (m_graph_find_node(graph, u, &node) != 0) {
-    free(neighbors);
-
     return -1;
   }
 
   int u_index = m_graph_get_index_from_node(graph, u);
   if (u_index < 0) {
-    free(neighbors);
-
     return -1;
   }
 
@@ -214,12 +216,11 @@ bool m_graph_is_3colorable(graph_t *graph) {
     edge_t *neighbors;
     int n = m_graph_get_same_color_edges(graph, graph->nodes[i].id, &neighbors);
 
-    if (n <= 0) {
-      return false;
+    if (neighbors != NULL) {
+      free(neighbors);
     }
 
     if (n != 0) {
-      free(neighbors);
       return false;
     }
   }

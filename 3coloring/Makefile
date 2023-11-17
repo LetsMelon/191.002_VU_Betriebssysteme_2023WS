@@ -47,7 +47,7 @@ check-valgrind: all
 		--trace-children=yes \
     	--verbose \
     	--log-file=valgrind-out.txt \
-    	./generator
+    	./generator 0-1 0-2 1-3 2-3 4-5 4-6
 
 package:
 	tar -cvzf melcher_3coloring.tar.gz ./Makefile ./src

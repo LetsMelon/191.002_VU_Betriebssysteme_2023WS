@@ -9,6 +9,7 @@
 typedef struct {
   int n;
 
+  // TODO replace with an 1d array instead of an 2d array
   int **data;
 } adjacent_matrix_t;
 

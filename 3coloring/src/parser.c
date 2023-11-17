@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -90,6 +91,9 @@ int p_split_at(char *input, char pattern, string_list_t *list) {
     return 0;
   }
 
+  // 512 Bytes should be enough to hold char* temporary
+  static char tmp_buffer[512];
+
   int last_split = 0;
   for (int i = 0; i < input_len; i += 1) {
     if (input[i] == pattern) {
@@ -99,18 +103,12 @@ int p_split_at(char *input, char pattern, string_list_t *list) {
       }
 
       int copy_len = i - last_split;
-      char *tmp = (char *)malloc(sizeof(char) * (copy_len + 1));
-      if (tmp == NULL) {
+      assert((copy_len + 1) <= sizeof(tmp_buffer));
+      strncpy(tmp_buffer, input + sizeof(char) * last_split, copy_len);
+      tmp_buffer[copy_len] = '\0';
+      if (sl_add(list, tmp_buffer) != 0) {
         return -1;
       }
-
-      strncpy(tmp, input + sizeof(char) * last_split, copy_len);
-      tmp[copy_len] = '\0';
-      if (sl_add(list, tmp) != 0) {
-        free(tmp);
-        return -1;
-      }
-      free(tmp);
 
       last_split = i + 1;
     }
@@ -121,18 +119,12 @@ int p_split_at(char *input, char pattern, string_list_t *list) {
     return 0;
   }
 
-  char *tmp = (char *)malloc(sizeof(char) * (copy_len + 1));
-  if (tmp == NULL) {
+  assert((copy_len + 1) < sizeof(tmp_buffer));
+  strncpy(tmp_buffer, input + sizeof(char) * last_split, copy_len);
+  tmp_buffer[copy_len] = '\0';
+  if (sl_add(list, tmp_buffer) != 0) {
     return -1;
   }
-
-  strncpy(tmp, input + sizeof(char) * last_split, copy_len);
-  tmp[copy_len] = '\0';
-  if (sl_add(list, tmp) != 0) {
-    free(tmp);
-    return -1;
-  }
-  free(tmp);
 
   return 0;
 }
@@ -166,7 +158,7 @@ int p_parse_as_edge(char *input, edge_t *edge) {
   int node1, node2;
 
   if (p_parse_as_int(edge_pair.values[0], &node1) != 0) {
-    sl_free(&edge_pair); 
+    sl_free(&edge_pair);
     return -1;
   }
 

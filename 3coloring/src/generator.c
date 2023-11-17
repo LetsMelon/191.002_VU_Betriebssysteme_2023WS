@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -25,6 +26,7 @@ int main(int argc, char **argv) {
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
   long seed = ts.tv_nsec;
+  seed = seed | ((seed >> 8) ^ (seed >> 12));
   printf("Seed: %ld\n", seed);
   srandom(seed);
 
@@ -97,34 +99,51 @@ int main(int argc, char **argv) {
 
   free(parsed_edges);
 
-  // m_am_print(&graph.edges);
+  m_am_print(&graph.edges);
 
   for (int i = 0; i < graph.nodes_count; i += 1) {
-    edge_t *color_neighbors;
-    int color_neighbors_count = m_graph_get_same_color_edges(
-        &graph, graph.nodes[i].id, &color_neighbors);
+    nodes_t node = graph.nodes[i];
 
-    if (color_neighbors_count == 0) {
-      free(color_neighbors);
+    printf("node {id: %d, color: 0x%llx}\n", node.id, node.color);
+  }
+
+  int current_start_index = 0;
+  while (m_graph_is_3colorable(&graph) == false &&
+         current_start_index < graph.nodes_count) {
+
+    edge_t *same_color_neighbors;
+    int same_color_neighbors_count = m_graph_get_same_color_edges(
+        &graph, graph.nodes[current_start_index].id, &same_color_neighbors);
+
+    if (same_color_neighbors_count == 0) {
+      free(same_color_neighbors);
+
+      current_start_index += 1;
+
       continue;
     }
 
-    if (color_neighbors_count == -1) {
+    if (same_color_neighbors_count == -1) {
       m_graph_free(&graph);
       return EXIT_FAILURE;
     }
 
-    for (int i = 0; i < color_neighbors_count; i++) {
-      edge_t e = color_neighbors[i];
-      // print the edge that must be removed to stdout
-      printf("%d-%d\n", e.node1, e.node2);
-      m_graph_remove_edge(&graph, &e);
+    for (int i = 0; i < same_color_neighbors_count; i += 1) {
+      edge_t e = same_color_neighbors[i];
+
+      printf("DEBUG: %d->%d\n", e.node1, e.node2);
+      // TODO this check should not be necessary, I _think_ it only happens if
+      // every edge has to be deleted
+      if (e.node1 != e.node2) {
+        printf("%d-%d\n", e.node1, e.node2);
+        m_graph_remove_edge(&graph, &e);
+      }
     }
 
-    free(color_neighbors);
+    free(same_color_neighbors);
   }
 
-  // m_am_print(&graph.edges);
+  m_am_print(&graph.edges);
 
   m_graph_free(&graph);
 
