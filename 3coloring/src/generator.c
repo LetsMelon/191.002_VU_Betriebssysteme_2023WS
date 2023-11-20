@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "edge.h"
 #include "matrix.h"
@@ -26,7 +27,8 @@ int main(int argc, char **argv) {
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
   long seed = ts.tv_nsec;
-  seed = seed | ((seed >> 8) ^ (seed >> 12));
+  // Something something random
+  seed = (seed & ((seed >> 8) ^ (seed >> 12))) + getpid();
   printf("Seed: %ld\n", seed);
   srandom(seed);
 
@@ -101,11 +103,11 @@ int main(int argc, char **argv) {
 
   m_am_print(&graph.edges);
 
-  for (int i = 0; i < graph.nodes_count; i += 1) {
-    nodes_t node = graph.nodes[i];
-
-    printf("node {id: %d, color: 0x%llx}\n", node.id, node.color);
-  }
+  // for (int i = 0; i < graph.nodes_count; i += 1) {
+  //   nodes_t node = graph.nodes[i];
+  //
+  //   printf("node {id: %d, color: 0x%lx}\n", node.id, node.color);
+  // }
 
   int current_start_index = 0;
   while (m_graph_is_3colorable(&graph) == false &&
