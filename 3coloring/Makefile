@@ -4,18 +4,19 @@
 
 CC = gcc
 DEFS = -D_BSD_SOURCE -D_SVID_SOURCE -D_POSIX_C_SOURCE=200809L
-CFLAGS = -Wall -g -std=c99 -pedantic $(DEFS) -pthread
+CFLAGS = -Wall -g -std=c99 -pedantic $(DEFS)
+LDFLAGS = -pthread -lpthread -lm
 
-OBJECTS = parser.o edge.o matrix.o
+OBJECTS = parser.o edge.o matrix.o circular_buffer.o shared_memory.o
 
 .PHONY: all clean .FORCE build-container run-container check-memory-leaks package
 all: supervisor generator
 
 supervisor: supervisor.o $(OBJECTS)
-	$(CC) $(LDFLAGS) -o $@ $^ -lm
+	$(CC) $(LDFLAGS) -o $@ $^ $(LDFLAGS)
 
 generator: generator.o $(OBJECTS)
-	$(CC) $(LDFLAGS) -o $@ $^ -lm
+	$(CC) $(LDFLAGS) -o $@ $^ $(LDFLAGS)
 
 %.o: ./src/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -25,6 +26,8 @@ generator.o: ./src/generator.c
 parser.o: ./src/parser.c
 edge.o: ./src/edge.c
 matrix.o: ./src/matrix.c
+circular_buffer.o: ./src/circular_buffer.c
+shared_memory.o: ./src/shared_memory.c
 
 clean:
 	rm -rf *.o supervisor generator melcher_3coloring.tar.gz ./html ./latex
