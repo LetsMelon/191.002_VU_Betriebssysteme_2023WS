@@ -38,4 +38,6 @@ void m_graph_remove_edge(graph_t *graph, edge_t *edge);
 
 bool m_graph_is_3colorable(graph_t *graph);
 
+void m_graph_color_randomly(graph_t *graph);
+
 #endif

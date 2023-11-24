@@ -7,21 +7,13 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "circular_buffer.h"
 #include "edge.h"
 #include "matrix.h"
 #include "parser.h"
 
 static char *USAGE = "SYNOPSIS\n\tgenerator EDGE1...\nEXAMPLE\n\tgenerator 0-1 "
                      "0-2 0-3 1-2 1-3 2-3\n";
-
-/*
-$ ./generator 0-1 0-5 1-3
-Seed: 216039000
-0-1
-0-0 // ?
-5-0
-3-1
-*/
 
 int main(int argc, char **argv) {
   struct timespec ts;
@@ -31,6 +23,11 @@ int main(int argc, char **argv) {
   seed = (seed & ((seed >> 8) ^ (seed >> 12))) + getpid();
   printf("Seed: %ld\n", seed);
   srandom(seed);
+
+  circular_buffer_t *circular_buffer = cb_open_slave();
+  if (circular_buffer == NULL) {
+    return EXIT_FAILURE;
+  }
 
   int input_len = 0;
   for (int i = 1; i < argc; i += 1) {
@@ -42,6 +39,8 @@ int main(int argc, char **argv) {
 
   char *input_concat = (char *)malloc(sizeof(char) * (input_len + 1));
   if (input_concat == NULL) {
+    cb_close_slave(circular_buffer);
+
     return EXIT_FAILURE;
   }
 
@@ -65,6 +64,7 @@ int main(int argc, char **argv) {
   free(input_concat);
 
   if (edges.num < 1) {
+    cb_close_slave(circular_buffer);
     sl_free(&edges);
 
     printf("%s", USAGE);
@@ -76,6 +76,7 @@ int main(int argc, char **argv) {
 
   edge_t *parsed_edges = (edge_t *)malloc(sizeof(edge_t) * edges.num);
   if (parsed_edges == NULL) {
+    cb_close_slave(circular_buffer);
     sl_free(&edges);
 
     return EXIT_FAILURE;
@@ -84,6 +85,7 @@ int main(int argc, char **argv) {
   for (size_t i = 0; i < edges.num; i += 1) {
     edge_t edge;
     if (p_parse_as_edge(edges.values[i], &edge) != 0) {
+      cb_close_slave(circular_buffer);
       sl_free(&edges);
       free(parsed_edges);
 
@@ -101,13 +103,16 @@ int main(int argc, char **argv) {
 
   free(parsed_edges);
 
-  m_am_print(&graph.edges);
+  // m_am_print(&graph.edges);
+  int edges_without_zero_count = 0;
+  edge_t *edges_without_zero =
+      (edge_t *)malloc(sizeof(edge_t) * graph.edges_count);
+  if (edges_without_zero == NULL) {
+    m_graph_free(&graph);
+    cb_close_slave(circular_buffer);
 
-  // for (int i = 0; i < graph.nodes_count; i += 1) {
-  //   nodes_t node = graph.nodes[i];
-  //
-  //   printf("node {id: %d, color: 0x%lx}\n", node.id, node.color);
-  // }
+    return EXIT_FAILURE;
+  }
 
   int current_start_index = 0;
   while (m_graph_is_3colorable(&graph) == false &&
@@ -126,6 +131,7 @@ int main(int argc, char **argv) {
     }
 
     if (same_color_neighbors_count == -1) {
+      cb_close_slave(circular_buffer);
       m_graph_free(&graph);
       return EXIT_FAILURE;
     }
@@ -137,6 +143,9 @@ int main(int argc, char **argv) {
       // TODO this check should not be necessary, I _think_ it only happens if
       // every edge has to be deleted
       if (e.node1 != e.node2) {
+        edges_without_zero[edges_without_zero_count] = e;
+        edges_without_zero_count += 1;
+
         printf("%d-%d\n", e.node1, e.node2);
         m_graph_remove_edge(&graph, &e);
       }
@@ -145,9 +154,19 @@ int main(int argc, char **argv) {
     free(same_color_neighbors);
   }
 
-  m_am_print(&graph.edges);
+  if (cb_write_solution(circular_buffer, edges_without_zero,
+                        edges_without_zero_count) != 0) {
+    m_graph_free(&graph);
+    cb_close_slave(circular_buffer);
+
+    return EXIT_FAILURE;
+  }
+
+  // m_am_print(&graph.edges);
 
   m_graph_free(&graph);
+
+  cb_close_slave(circular_buffer);
 
   return EXIT_SUCCESS;
 }

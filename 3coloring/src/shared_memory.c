@@ -33,8 +33,15 @@ static shared_memory_t *sm_open(int *fd, bool is_master, int flags) {
   }
 
   if (is_master == true) {
+    // fill with value -2
+    for (int i = 0; i < MAX_DATA_COUNT; i++) {
+      shared_memory->data[i] = -2;
+    }
+
     shared_memory->read_index = 0;
     shared_memory->write_index = 0;
+
+    shared_memory->generators_wrote_to_shared_memory = 0;
   }
 
   return shared_memory;

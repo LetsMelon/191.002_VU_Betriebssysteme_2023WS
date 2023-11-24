@@ -3,12 +3,13 @@
 
 #include <stdbool.h>
 
-#define MAX_DATA_COUNT (4096 - sizeof(bool) - 2 * sizeof(int)) / sizeof(int)
+#define MAX_DATA_COUNT (4096 - sizeof(bool) - 3 * sizeof(int)) / sizeof(int)
 
 typedef struct {
   bool in_shutdown;
 
   int write_index, read_index;
+  int generators_wrote_to_shared_memory;
 
   int data[MAX_DATA_COUNT];
 } shared_memory_t;

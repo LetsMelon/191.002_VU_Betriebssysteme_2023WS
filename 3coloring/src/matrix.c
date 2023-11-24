@@ -108,9 +108,7 @@ int m_graph_init(graph_t *graph, edge_t *edges, int edges_count) {
     }
   }
 
-  for (int i = 0; i < graph->nodes_count; i++) {
-    graph->nodes[i].color = random_color();
-  }
+  m_graph_color_randomly(graph);
 
   graph->edges_count = edges_count;
 
@@ -226,4 +224,10 @@ bool m_graph_is_3colorable(graph_t *graph) {
   }
 
   return true;
+}
+
+void m_graph_color_randomly(graph_t *graph) {
+  for (int i = 0; i < graph->nodes_count; i++) {
+    graph->nodes[i].color = random_color();
+  }
 }
