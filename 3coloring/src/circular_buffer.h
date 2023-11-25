@@ -3,8 +3,6 @@
 
 #include <stdint.h>
 
-#include <stdbool.h>
-
 // The struct 'circular_buffer_t' should have a size of roughly 2KB
 #define BUFFER_SIZE (uint64_t)((2048 - 3 * sizeof(int)) / sizeof(int))
 
@@ -18,8 +16,6 @@ typedef struct {
 int cb_init(circular_buffer_t *buffer);
 void cb_free(circular_buffer_t *buffer);
 
-bool cb_isFull(circular_buffer_t *buffer);
-bool cb_isEmpty(circular_buffer_t *buffer);
 int cb_write(circular_buffer_t *buffer, int value);
 int cb_read(circular_buffer_t *buffer);
 

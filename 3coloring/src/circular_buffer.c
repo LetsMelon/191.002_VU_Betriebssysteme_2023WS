@@ -13,14 +13,14 @@ int cb_init(circular_buffer_t *buffer) {
 
 void cb_free(circular_buffer_t *buffer) {}
 
-bool cb_isFull(circular_buffer_t *buffer) {
+bool cb_is_full(circular_buffer_t *buffer) {
   return BUFFER_SIZE == buffer->count;
 }
 
-bool cb_isEmpty(circular_buffer_t *buffer) { return buffer->count == 0; }
+bool cb_is_empty(circular_buffer_t *buffer) { return buffer->count == 0; }
 
 int cb_write(circular_buffer_t *buffer, int value) {
-  if (cb_isFull(buffer) == true) {
+  if (cb_is_full(buffer) == true) {
     return -1;
   }
 
@@ -32,7 +32,7 @@ int cb_write(circular_buffer_t *buffer, int value) {
 }
 
 int cb_read(circular_buffer_t *buffer) {
-  if (cb_isEmpty(buffer) == true) {
+  if (cb_is_empty(buffer) == true) {
     return -1;
   }
 
