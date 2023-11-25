@@ -8,6 +8,7 @@
 
 #include "circular_buffer.h"
 #include "circular_buffer_helper.h"
+#include "parser.h"
 #include "shared_memory.h"
 
 static char *USAGE = "SYNOPSIS\n\tsupervisor [-n limit] [-w delay] [-p]\n";
@@ -27,7 +28,42 @@ typedef struct {
   bool flag_p;
 } arguments_t;
 
-int main(void) {
+int arguments_init(arguments_t *arguments, int argc, char **argv) {
+  // ? Ignore
+  arguments->flag_p = false;
+
+  arguments->limit = -1;
+  arguments->delay = 0;
+
+  int opt;
+
+  while ((opt = getopt(argc, argv, "n:w:p")) != -1) {
+    switch (opt) {
+    case 'n':
+      if (p_parse_as_int(optarg, &arguments->limit) < 0) {
+        return -1;
+      }
+
+      break;
+    case 'w':
+      if (p_parse_as_int(optarg, &arguments->delay) < 0) {
+        return -1;
+      }
+
+      break;
+    case 'p':
+      arguments->flag_p = true;
+      break;
+    default:
+      fprintf(stderr, "Unknown arguments: '%d'", opt);
+      return -1;
+    }
+  }
+
+  return 0;
+}
+
+int main(int argc, char **argv) {
   // ! The struct 'circular_buffer_t' must be smaller than 4096 bytes.
   assert(sizeof(circular_buffer_t) <= 4096);
 
@@ -37,8 +73,26 @@ int main(void) {
 
   signal(SIGINT, handle_shutdown);
 
+  arguments_t arguments;
+  if (arguments_init(&arguments, argc, argv) < 0) {
+    printf("%s", USAGE);
+
+    sem_post(shared_memory.semaphore_in_shutdown);
+    sm_close(&shared_memory, true);
+
+    return EXIT_FAILURE;
+  }
+
+#ifdef DDEBUG
+  printf("args: limt = %d, delay = %d, flag = %d\n", arguments.limit,
+         arguments.delay, (int)arguments.flag_p);
+#endif
+
   sem_post(shared_memory.semaphore_buffer_mutex);
 
+  sleep(arguments.delay);
+
+  int solutions_encountered = 0;
   int best_3coloring = -1;
   while (in_shutdown == false) {
     sem_wait(shared_memory.semaphore_buffer_mutex);
@@ -68,7 +122,7 @@ int main(void) {
       if (best_3coloring == -1 || len < best_3coloring) {
         best_3coloring = len;
 
-        printf("Solution with %d edges:", len);
+        fprintf(stderr, "Solution with %d edges:", len);
         for (int i = 0; i < len; i += 1) {
           printf(" %d-%d", edges[i].node1, edges[i].node2);
         }
@@ -80,7 +134,17 @@ int main(void) {
 
     sem_post(shared_memory.semaphore_buffer_mutex);
 
-    sleep(2);
+    solutions_encountered += 1;
+
+    if (arguments.limit != -1 && solutions_encountered >= arguments.limit) {
+      printf("The graph might not be 3-colorable, best solution removes %d "
+             "edges.\n",
+             best_3coloring);
+
+      break;
+    }
+
+    // sleep(2);
   }
 
   printf("Shutdown ...\n");
