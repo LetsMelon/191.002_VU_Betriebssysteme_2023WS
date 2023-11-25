@@ -39,17 +39,53 @@ int main(void) {
 
   sem_post(shared_memory.semaphore_buffer_mutex);
 
-  while (!in_shutdown) {
+  int best_3coloring = -1;
+  while (in_shutdown == false) {
     sem_wait(shared_memory.semaphore_buffer_mutex);
 
-    printf("count: %llu\n", shared_memory.buffer->count);
+    while (shared_memory.buffer->count > 0) {
+      edge_t *edges;
+      int len = cbh_read_edges(shared_memory.buffer, &edges);
+
+      if (len < 0) {
+        in_shutdown = true;
+
+        fprintf(stderr, "Error: when reading from cb\n");
+
+        break;
+      }
+
+      if (len == 0) {
+        in_shutdown = true;
+
+        free(edges);
+
+        printf("The graph is 3-colorable!\n");
+
+        break;
+      }
+
+      if (best_3coloring == -1 || len < best_3coloring) {
+        best_3coloring = len;
+
+        printf("Solution with %d edges:", len);
+        for (int i = 0; i < len; i += 1) {
+          printf(" %d-%d", edges[i].node1, edges[i].node2);
+        }
+        printf("\n");
+
+        free(edges);
+      }
+    }
 
     sem_post(shared_memory.semaphore_buffer_mutex);
-    /* code */
-    sleep(5);
+
+    sleep(2);
   }
 
   printf("Shutdown ...\n");
+
+  // TODO send signal
 
   sm_close(&shared_memory, true);
 
