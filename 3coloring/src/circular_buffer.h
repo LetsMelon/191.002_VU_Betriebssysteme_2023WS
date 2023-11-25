@@ -1,26 +1,26 @@
 #ifndef _CB
 #define _CB
 
-#include <semaphore.h>
+#include <stdint.h>
 
-#include "shared_memory.h"
+#include <stdbool.h>
 
-#define SEMAPHORE_FREE "12220857_free"
-#define SEMAPHORE_USED "12220857_used"
-#define SEMAPHORE_MUTEX "12220857_mutex"
+// The struct 'circular_buffer_t' should have a size of roughly 2KB
+#define BUFFER_SIZE (uint64_t)((2048 - 3 * sizeof(int)) / sizeof(int))
 
 typedef struct {
-  shared_memory_t *shared_memory;
-
-  sem_t *semaphore_free, *semaphore_used, *semaphore_mutex;
-
-  int fd;
+  int data[BUFFER_SIZE];
+  uint64_t head;  // Index for writing data
+  uint64_t tail;  // Index for reading data
+  uint64_t count; // Number of elements in the buffer
 } circular_buffer_t;
 
-circular_buffer_t *cb_open_master();
-circular_buffer_t *cb_open_slave();
+int cb_init(circular_buffer_t *buffer);
+void cb_free(circular_buffer_t *buffer);
 
-int cb_close_master(circular_buffer_t *circular_buffer);
-int cb_close_slave(circular_buffer_t *circular_buffer);
+bool cb_isFull(circular_buffer_t *buffer);
+bool cb_isEmpty(circular_buffer_t *buffer);
+int cb_write(circular_buffer_t *buffer, int value);
+int cb_read(circular_buffer_t *buffer);
 
 #endif
