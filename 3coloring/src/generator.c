@@ -98,73 +98,74 @@ int main(int argc, char **argv) {
   int n = edges.num;
   sl_free(&edges);
 
-  graph_t graph;
-  m_graph_init(&graph, parsed_edges, n);
+  while (!circular_buffer->shared_memory->in_shutdown) {
+    graph_t graph;
+    m_graph_init(&graph, parsed_edges, n);
 
-  free(parsed_edges);
-
-  // m_am_print(&graph.edges);
-  int edges_without_zero_count = 0;
-  edge_t *edges_without_zero =
-      (edge_t *)malloc(sizeof(edge_t) * graph.edges_count);
-  if (edges_without_zero == NULL) {
-    m_graph_free(&graph);
-    cb_close_slave(circular_buffer);
-
-    return EXIT_FAILURE;
-  }
-
-  int current_start_index = 0;
-  while (m_graph_is_3colorable(&graph) == false &&
-         current_start_index < graph.nodes_count) {
-
-    edge_t *same_color_neighbors;
-    int same_color_neighbors_count = m_graph_get_same_color_edges(
-        &graph, graph.nodes[current_start_index].id, &same_color_neighbors);
-
-    if (same_color_neighbors_count == 0) {
-      free(same_color_neighbors);
-
-      current_start_index += 1;
-
-      continue;
-    }
-
-    if (same_color_neighbors_count == -1) {
-      cb_close_slave(circular_buffer);
+    // m_am_print(&graph.edges);
+    int edges_without_zero_count = 0;
+    edge_t *edges_without_zero =
+        (edge_t *)malloc(sizeof(edge_t) * graph.edges_count);
+    if (edges_without_zero == NULL) {
       m_graph_free(&graph);
+      cb_close_slave(circular_buffer);
+
       return EXIT_FAILURE;
     }
 
-    for (int i = 0; i < same_color_neighbors_count; i += 1) {
-      edge_t e = same_color_neighbors[i];
+    int current_start_index = 0;
+    while (m_graph_is_3colorable(&graph) == false &&
+           current_start_index < graph.nodes_count) {
 
-      printf("DEBUG: %d->%d\n", e.node1, e.node2);
-      // TODO this check should not be necessary, I _think_ it only happens if
-      // every edge has to be deleted
-      if (e.node1 != e.node2) {
-        edges_without_zero[edges_without_zero_count] = e;
-        edges_without_zero_count += 1;
+      edge_t *same_color_neighbors;
+      int same_color_neighbors_count = m_graph_get_same_color_edges(
+          &graph, graph.nodes[current_start_index].id, &same_color_neighbors);
 
-        printf("%d-%d\n", e.node1, e.node2);
-        m_graph_remove_edge(&graph, &e);
+      if (same_color_neighbors_count == 0) {
+        free(same_color_neighbors);
+
+        current_start_index += 1;
+
+        continue;
       }
+
+      if (same_color_neighbors_count == -1) {
+        cb_close_slave(circular_buffer);
+        m_graph_free(&graph);
+        return EXIT_FAILURE;
+      }
+
+      for (int i = 0; i < same_color_neighbors_count; i += 1) {
+        edge_t e = same_color_neighbors[i];
+
+        printf("DEBUG: %d->%d\n", e.node1, e.node2);
+        // TODO this check should not be necessary, I _think_ it only happens if
+        // every edge has to be deleted
+        if (e.node1 != e.node2) {
+          edges_without_zero[edges_without_zero_count] = e;
+          edges_without_zero_count += 1;
+
+          printf("%d-%d\n", e.node1, e.node2);
+          m_graph_remove_edge(&graph, &e);
+        }
+      }
+
+      free(same_color_neighbors);
     }
 
-    free(same_color_neighbors);
-  }
+    if (cb_write_solution(circular_buffer, edges_without_zero,
+                          edges_without_zero_count) != 0) {
+      m_graph_free(&graph);
+      cb_close_slave(circular_buffer);
+      free(parsed_edges);
 
-  if (cb_write_solution(circular_buffer, edges_without_zero,
-                        edges_without_zero_count) != 0) {
+      return EXIT_FAILURE;
+    }
+
     m_graph_free(&graph);
-    cb_close_slave(circular_buffer);
-
-    return EXIT_FAILURE;
   }
 
-  // m_am_print(&graph.edges);
-
-  m_graph_free(&graph);
+  free(parsed_edges);
 
   cb_close_slave(circular_buffer);
 
