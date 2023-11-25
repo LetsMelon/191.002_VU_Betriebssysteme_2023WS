@@ -1,4 +1,6 @@
 #include <assert.h>
+#include <semaphore.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,6 +11,15 @@
 #include "shared_memory.h"
 
 static char *USAGE = "SYNOPSIS\n\tsupervisor [-n limit] [-w delay] [-p]\n";
+
+shared_memory_t shared_memory;
+volatile bool in_shutdown = false;
+
+void handle_shutdown(int signal) {
+  sem_post(shared_memory.semaphore_in_shutdown);
+
+  in_shutdown = true;
+}
 
 typedef struct {
   int limit, delay;
@@ -60,10 +71,18 @@ int main(void) {
   //
   // cb_free(&buffer);
 
-  shared_memory_t shared_memory;
   if (sm_open(&shared_memory, true) < 0) {
     return EXIT_FAILURE;
   };
+
+  signal(SIGINT, handle_shutdown);
+
+  while (!in_shutdown) {
+    /* code */
+    sleep(1);
+  }
+
+  printf("Shutdown ...\n");
 
   sm_close(&shared_memory, true);
 
