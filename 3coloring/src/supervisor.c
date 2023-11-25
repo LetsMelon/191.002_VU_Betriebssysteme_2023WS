@@ -85,7 +85,7 @@ int main(void) {
 
   printf("Shutdown ...\n");
 
-  // TODO send signal
+  sem_post(shared_memory.semaphore_in_shutdown);
 
   sm_close(&shared_memory, true);
 

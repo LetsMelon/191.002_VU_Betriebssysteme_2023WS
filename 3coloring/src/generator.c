@@ -156,7 +156,14 @@ int main(int argc, char **argv) {
 
     m_graph_free(&graph);
 
-    // TODO check for shutdown signal
+    if (sem_trywait(shared_memory.semaphore_in_shutdown) == 0) {
+      sem_post(shared_memory.semaphore_in_shutdown);
+
+      free(edges_without_zero);
+
+      break;
+    }
+
     sem_wait(shared_memory.semaphore_buffer_mutex);
     if (cbh_write_edges(shared_memory.buffer, edges_without_zero,
                         edges_without_zero_count) < 0) {
