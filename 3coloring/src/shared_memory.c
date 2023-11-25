@@ -32,9 +32,9 @@ int sm_open(shared_memory_t *shared_memory, bool is_master) {
 
   if (is_master == true) {
     shared_memory->semaphore_buffer_mutex =
-        sem_open(SEM_MUTEX, O_CREAT | O_EXCL, 0660, 1);
+        sem_open(SEM_MUTEX, O_CREAT | O_EXCL, 0660, 0);
   } else {
-    shared_memory->semaphore_buffer_mutex = sem_open(SEM_SHUTDOWN, 0);
+    shared_memory->semaphore_buffer_mutex = sem_open(SEM_MUTEX, O_RDWR);
   }
   if (shared_memory->semaphore_buffer_mutex == SEM_FAILED) {
     fprintf(stderr, "Error: Semaphore 'buffer_mutex' failed.\n");
