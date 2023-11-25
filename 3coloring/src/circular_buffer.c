@@ -26,7 +26,7 @@ int cb_write(circular_buffer_t *buffer, int value) {
 
   buffer->data[buffer->head] = value;
   buffer->head = (buffer->head + 1) % BUFFER_SIZE;
-  buffer->count++;
+  buffer->count += 1;
 
   return 0;
 }
@@ -38,7 +38,7 @@ int cb_read(circular_buffer_t *buffer) {
 
   int value = buffer->data[buffer->tail];
   buffer->tail = (buffer->tail + 1) % BUFFER_SIZE;
-  buffer->count--;
+  buffer->count -= 1;
 
   return value;
 }
