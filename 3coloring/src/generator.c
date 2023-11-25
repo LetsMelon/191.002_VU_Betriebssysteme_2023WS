@@ -68,7 +68,6 @@ int main(int argc, char **argv) {
   free(input_concat);
 
   if (edges.num < 1) {
-    cb_close_slave(circular_buffer);
     sl_free(&edges);
     sm_close(&shared_memory, false);
 
@@ -79,7 +78,6 @@ int main(int argc, char **argv) {
 
   edge_t *parsed_edges = (edge_t *)malloc(sizeof(edge_t) * edges.num);
   if (parsed_edges == NULL) {
-    cb_close_slave(circular_buffer);
     sl_free(&edges);
     sm_close(&shared_memory, false);
 
@@ -89,7 +87,6 @@ int main(int argc, char **argv) {
   for (size_t i = 0; i < edges.num; i += 1) {
     edge_t edge;
     if (p_parse_as_edge(edges.values[i], &edge) != 0) {
-      cb_close_slave(circular_buffer);
       sl_free(&edges);
       free(parsed_edges);
       sm_close(&shared_memory, false);
@@ -103,7 +100,6 @@ int main(int argc, char **argv) {
   int n = edges.num;
   sl_free(&edges);
 
- fix_shared_memory
   for (int xx = 0; xx < 5; xx += 1) {
     graph_t graph;
     m_graph_init(&graph, parsed_edges, n);

@@ -11,9 +11,6 @@
 #include "parser.h"
 #include "shared_memory.h"
 
-volatile sig_atomic_t quit = 0;
-void handle_signal(int signal) { quit = 1; }
-
 static char *USAGE = "SYNOPSIS\n\tsupervisor [-n limit] [-w delay] [-p]\n";
 
 shared_memory_t shared_memory;
@@ -158,5 +155,3 @@ int main(int argc, char **argv) {
 
   return EXIT_SUCCESS;
 }
-
-// ./generator 0-1 0-2 1-2 1-3 2-3

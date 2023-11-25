@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include "edge.h"
+
 // The struct 'circular_buffer_t' should have a size of roughly 2KB
 #define BUFFER_SIZE (uint64_t)((2048 - 3 * sizeof(int)) / sizeof(int))
 
@@ -18,10 +20,5 @@ void cb_free(circular_buffer_t *buffer);
 
 int cb_write(circular_buffer_t *buffer, int value);
 int cb_read(circular_buffer_t *buffer);
-
-int cb_write_solution(circular_buffer_t *circular_buffer,
-                      edge_t *edges_to_remove, int edges_to_remove_len);
-
-int cb_read_edges(circular_buffer_t *circular_buffer, edge_t **edges);
 
 #endif
