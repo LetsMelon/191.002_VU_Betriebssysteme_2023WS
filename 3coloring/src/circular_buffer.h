@@ -19,4 +19,9 @@ void cb_free(circular_buffer_t *buffer);
 int cb_write(circular_buffer_t *buffer, int value);
 int cb_read(circular_buffer_t *buffer);
 
+int cb_write_solution(circular_buffer_t *circular_buffer,
+                      edge_t *edges_to_remove, int edges_to_remove_len);
+
+int cb_read_edges(circular_buffer_t *circular_buffer, edge_t **edges);
+
 #endif
