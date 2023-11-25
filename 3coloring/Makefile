@@ -42,6 +42,9 @@ build-container: .FORCE
 run-container: build-container
 	docker run --rm -it uni_bet_3coloring:latest
 
+terminal-container: .FORCE
+	docker exec -it $$(docker ps -qf "ancestor=uni_bet_3coloring" | awk 'NR==1{print $1}') /bin/bash
+
 check-valgrind: all
 	valgrind \
 		--leak-check=full \
