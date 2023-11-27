@@ -5,9 +5,9 @@
 CC = gcc
 DEFS = -D_BSD_SOURCE -D_SVID_SOURCE -D_POSIX_C_SOURCE=200809L
 CFLAGS = -Wall -g -std=c99 -pedantic $(DEFS)
-LDFLAGS = -pthread -lpthread -lm
+LDFLAGS = -pthread -lpthread -lm -lrt
 
-OBJECTS = parser.o edge.o matrix.o circular_buffer.o shared_memory.o
+OBJECTS = parser.o edge.o matrix.o circular_buffer.o circular_buffer_helper.o shared_memory.o
 
 .PHONY: all clean .FORCE build-container run-container check-memory-leaks package
 all: supervisor generator
@@ -28,6 +28,7 @@ edge.o: ./src/edge.c
 matrix.o: ./src/matrix.c
 circular_buffer.o: ./src/circular_buffer.c
 shared_memory.o: ./src/shared_memory.c
+circular_buffer_helper.o: ./src/circular_buffer_helper.c
 
 clean:
 	rm -rf *.o supervisor generator melcher_3coloring.tar.gz ./html ./latex
@@ -40,6 +41,9 @@ build-container: .FORCE
 
 run-container: build-container
 	docker run --rm -it uni_bet_3coloring:latest
+
+terminal-container: .FORCE
+	docker exec -it $$(docker ps -qf "ancestor=uni_bet_3coloring" | awk 'NR==1{print $1}') /bin/bash
 
 check-valgrind: all
 	valgrind \

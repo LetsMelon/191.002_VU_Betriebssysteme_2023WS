@@ -1,3 +1,5 @@
+#include <errno.h>
+#include <semaphore.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -8,9 +10,11 @@
 #include <unistd.h>
 
 #include "circular_buffer.h"
+#include "circular_buffer_helper.h"
 #include "edge.h"
 #include "matrix.h"
 #include "parser.h"
+#include "shared_memory.h"
 
 static char *USAGE = "SYNOPSIS\n\tgenerator EDGE1...\nEXAMPLE\n\tgenerator 0-1 "
                      "0-2 0-3 1-2 1-3 2-3\n";
@@ -24,8 +28,8 @@ int main(int argc, char **argv) {
   printf("Seed: %ld\n", seed);
   srandom(seed);
 
-  circular_buffer_t *circular_buffer = cb_open_slave();
-  if (circular_buffer == NULL) {
+  shared_memory_t shared_memory;
+  if (sm_open(&shared_memory, false) < 0) {
     return EXIT_FAILURE;
   }
 
@@ -39,7 +43,7 @@ int main(int argc, char **argv) {
 
   char *input_concat = (char *)malloc(sizeof(char) * (input_len + 1));
   if (input_concat == NULL) {
-    cb_close_slave(circular_buffer);
+    sm_close(&shared_memory, false);
 
     return EXIT_FAILURE;
   }
@@ -64,20 +68,18 @@ int main(int argc, char **argv) {
   free(input_concat);
 
   if (edges.num < 1) {
-    cb_close_slave(circular_buffer);
     sl_free(&edges);
+    sm_close(&shared_memory, false);
 
     printf("%s", USAGE);
 
     return EXIT_FAILURE;
   }
 
-  // sl_print(&edges);
-
   edge_t *parsed_edges = (edge_t *)malloc(sizeof(edge_t) * edges.num);
   if (parsed_edges == NULL) {
-    cb_close_slave(circular_buffer);
     sl_free(&edges);
+    sm_close(&shared_memory, false);
 
     return EXIT_FAILURE;
   }
@@ -85,9 +87,9 @@ int main(int argc, char **argv) {
   for (size_t i = 0; i < edges.num; i += 1) {
     edge_t edge;
     if (p_parse_as_edge(edges.values[i], &edge) != 0) {
-      cb_close_slave(circular_buffer);
       sl_free(&edges);
       free(parsed_edges);
+      sm_close(&shared_memory, false);
 
       return EXIT_FAILURE;
     }
@@ -98,17 +100,17 @@ int main(int argc, char **argv) {
   int n = edges.num;
   sl_free(&edges);
 
-  while (!circular_buffer->shared_memory->in_shutdown) {
+  while (true) {
     graph_t graph;
     m_graph_init(&graph, parsed_edges, n);
 
-    // m_am_print(&graph.edges);
     int edges_without_zero_count = 0;
     edge_t *edges_without_zero =
         (edge_t *)malloc(sizeof(edge_t) * graph.edges_count);
     if (edges_without_zero == NULL) {
       m_graph_free(&graph);
-      cb_close_slave(circular_buffer);
+      free(parsed_edges);
+      sm_close(&shared_memory, false);
 
       return EXIT_FAILURE;
     }
@@ -130,8 +132,10 @@ int main(int argc, char **argv) {
       }
 
       if (same_color_neighbors_count == -1) {
-        cb_close_slave(circular_buffer);
         m_graph_free(&graph);
+        free(parsed_edges);
+        sm_close(&shared_memory, false);
+
         return EXIT_FAILURE;
       }
 
@@ -139,13 +143,10 @@ int main(int argc, char **argv) {
         edge_t e = same_color_neighbors[i];
 
         printf("DEBUG: %d->%d\n", e.node1, e.node2);
-        // TODO this check should not be necessary, I _think_ it only happens if
-        // every edge has to be deleted
         if (e.node1 != e.node2) {
           edges_without_zero[edges_without_zero_count] = e;
           edges_without_zero_count += 1;
 
-          printf("%d-%d\n", e.node1, e.node2);
           m_graph_remove_edge(&graph, &e);
         }
       }
@@ -153,21 +154,35 @@ int main(int argc, char **argv) {
       free(same_color_neighbors);
     }
 
-    if (cb_write_solution(circular_buffer, edges_without_zero,
-                          edges_without_zero_count) != 0) {
+    m_graph_free(&graph);
+
+    if (sem_trywait(shared_memory.semaphore_in_shutdown) == 0) {
+      sem_post(shared_memory.semaphore_in_shutdown);
+
+      free(edges_without_zero);
+
+      break;
+    }
+
+    sem_wait(shared_memory.semaphore_buffer_mutex);
+    if (cbh_write_edges(shared_memory.buffer, edges_without_zero,
+                        edges_without_zero_count) < 0) {
       m_graph_free(&graph);
-      cb_close_slave(circular_buffer);
       free(parsed_edges);
+      sm_close(&shared_memory, false);
 
       return EXIT_FAILURE;
     }
+    sem_post(shared_memory.semaphore_buffer_mutex);
 
-    m_graph_free(&graph);
+    free(edges_without_zero);
+
+    printf("\n");
   }
 
   free(parsed_edges);
 
-  cb_close_slave(circular_buffer);
+  sm_close(&shared_memory, false);
 
   return EXIT_SUCCESS;
 }

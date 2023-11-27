@@ -1,81 +1,148 @@
-#include <fcntl.h>
+#include <semaphore.h>
 #include <stdio.h>
+#include <stdlib.h>
+
 #include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include <unistd.h>
 
 #include "shared_memory.h"
 
-#define SHARED_MEMORY_NAME "/12220857_shm"
+#define SEM_SHUTDOWN "/12220857_sh"
+#define SEM_MUTEX "/12220857_mut"
 
-static shared_memory_t *sm_open(int *fd, bool is_master, int flags) {
-  *fd = shm_open(SHARED_MEMORY_NAME, flags, 0600);
-  if (*fd == -1) {
-    return NULL;
+#define SHM_BUFFER "/12220857_buffer"
+
+int sm_open(shared_memory_t *shared_memory, bool is_master) {
+  // ! If a crash happened
+  if (is_master == true) {
+    sem_unlink(SEM_SHUTDOWN);
+    sem_unlink(SEM_MUTEX);
   }
 
   if (is_master == true) {
-    if (ftruncate(*fd, sizeof(shared_memory_t)) < 0) {
-      shm_unlink(SHARED_MEMORY_NAME);
-      close(*fd);
-
-      return NULL;
-    }
+    shared_memory->semaphore_in_shutdown =
+        sem_open(SEM_SHUTDOWN, O_CREAT | O_EXCL, 0660, 0);
+  } else {
+    shared_memory->semaphore_in_shutdown = sem_open(SEM_SHUTDOWN, 0);
   }
-
-  shared_memory_t *shared_memory;
-  shared_memory = mmap(NULL, sizeof(shared_memory_t), PROT_READ | PROT_WRITE,
-                       MAP_SHARED, *fd, 0);
-  if (shared_memory == MAP_FAILED) {
-    shm_unlink(SHARED_MEMORY_NAME);
-    close(*fd);
-
-    return NULL;
+  if (shared_memory->semaphore_in_shutdown == SEM_FAILED) {
+    fprintf(stderr, "Error: Semaphore 'shutdown' failed.\n");
+    return -1;
   }
 
   if (is_master == true) {
-    // fill with value -2
-    for (int i = 0; i < MAX_DATA_COUNT; i++) {
-      shared_memory->data[i] = -2;
+    shared_memory->semaphore_buffer_mutex =
+        sem_open(SEM_MUTEX, O_CREAT | O_EXCL, 0660, 0);
+  } else {
+    shared_memory->semaphore_buffer_mutex = sem_open(SEM_MUTEX, O_RDWR);
+  }
+  if (shared_memory->semaphore_buffer_mutex == SEM_FAILED) {
+    fprintf(stderr, "Error: Semaphore 'buffer_mutex' failed.\n");
+
+    sem_close(shared_memory->semaphore_in_shutdown);
+    sem_unlink(SEM_SHUTDOWN);
+
+    return -1;
+  }
+
+  if (is_master == true) {
+    shared_memory->fd = shm_open(SHM_BUFFER, O_CREAT | O_RDWR, 0660);
+  } else {
+    shared_memory->fd = shm_open(SHM_BUFFER, O_RDWR, 0660);
+  }
+  if (shared_memory->fd == -1) {
+    fprintf(stderr, "Error: Opening shared memory failed.\n");
+
+    sem_close(shared_memory->semaphore_in_shutdown);
+    sem_unlink(SEM_SHUTDOWN);
+
+    sem_close(shared_memory->semaphore_buffer_mutex);
+    sem_unlink(SEM_MUTEX);
+
+    return -1;
+  }
+
+  if (is_master == true) {
+    if (ftruncate(shared_memory->fd, sizeof(circular_buffer_t)) == -1) {
+      fprintf(stderr, "Error: ftruncate on shared memory failed.\n");
+
+      sem_close(shared_memory->semaphore_in_shutdown);
+      sem_unlink(SEM_SHUTDOWN);
+
+      sem_close(shared_memory->semaphore_buffer_mutex);
+      sem_unlink(SEM_MUTEX);
+
+      close(shared_memory->fd);
+      shm_unlink(SHM_BUFFER);
+
+      return -1;
     }
-
-    shared_memory->read_index = 0;
-    shared_memory->write_index = 0;
-
-    shared_memory->generators_wrote_to_shared_memory = 0;
   }
 
-  return shared_memory;
-}
+  shared_memory->buffer =
+      mmap(NULL, sizeof(circular_buffer_t), PROT_READ | PROT_WRITE, MAP_SHARED,
+           shared_memory->fd, 0);
+  if (shared_memory->buffer == MAP_FAILED) {
+    fprintf(stderr, "Error: mmap on shared memory failed.\n");
 
-shared_memory_t *sm_open_slave(int *fd) { return sm_open(fd, false, O_RDWR); }
+    sem_close(shared_memory->semaphore_in_shutdown);
+    sem_unlink(SEM_SHUTDOWN);
 
-shared_memory_t *sm_open_master(int *fd) {
-  return sm_open(fd, true, O_RDWR | O_CREAT);
-}
+    sem_close(shared_memory->semaphore_buffer_mutex);
+    sem_unlink(SEM_MUTEX);
 
-static int sm_close(shared_memory_t *shm, int fd, bool is_master) {
-  int status = 0;
+    close(shared_memory->fd);
+    shm_unlink(SHM_BUFFER);
 
-  if (munmap(shm, sizeof(*shm)) != 0) {
-    status = -1;
+    return -1;
   }
 
-  if (close(fd) != 0) {
-    status = -1;
-  }
+  if (is_master == true) {
+    if (cb_init(shared_memory->buffer) < 0) {
+      sem_close(shared_memory->semaphore_in_shutdown);
+      sem_close(shared_memory->semaphore_buffer_mutex);
 
-  if (is_master) {
-    if (shm_unlink(SHARED_MEMORY_NAME) != 0) {
-      status = -1;
+      munmap(shared_memory->buffer, sizeof(circular_buffer_t));
+
+      close(shared_memory->fd);
+
+      sem_unlink(SEM_SHUTDOWN);
+      sem_unlink(SEM_MUTEX);
+
+      shm_unlink(SHM_BUFFER);
+
+      return -1;
     }
   }
-  return status;
+
+  return 0;
 }
 
-int sm_close_slave(shared_memory_t *shared_memory, int fd) {
-  return sm_close(shared_memory, fd, false);
-}
+int sm_close(shared_memory_t *shared_memory, bool is_master) {
+  int error = 0;
 
-int sm_close_master(shared_memory_t *shared_memory, int fd) {
-  return sm_close(shared_memory, fd, true);
+  error |= sem_close(shared_memory->semaphore_in_shutdown);
+  error |= sem_close(shared_memory->semaphore_buffer_mutex);
+
+  error |= munmap(shared_memory->buffer, sizeof(circular_buffer_t));
+
+  error |= close(shared_memory->fd);
+
+  if (is_master == true) {
+    error |= sem_unlink(SEM_SHUTDOWN);
+    error |= sem_unlink(SEM_MUTEX);
+
+    error |= shm_unlink(SHM_BUFFER);
+  }
+
+  cb_free(shared_memory->buffer);
+
+  if (error != 0) {
+    return -1;
+  }
+
+  return 0;
 }
