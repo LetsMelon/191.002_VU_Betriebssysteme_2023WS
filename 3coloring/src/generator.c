@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
   int n = edges.num;
   sl_free(&edges);
 
-  for (int xx = 0; xx < 5; xx += 1) {
+  while (true) {
     graph_t graph;
     m_graph_init(&graph, parsed_edges, n);
 
@@ -177,7 +177,7 @@ int main(int argc, char **argv) {
 
     free(edges_without_zero);
 
-    sleep(2);
+    printf("\n");
   }
 
   free(parsed_edges);
