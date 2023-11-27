@@ -32,5 +32,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
       - name: Build
-        run: cd ${{ matrix.projects }} && make
+        working-directory: ./${{ matrix.projects }}
+        run: make
+
+      - name: Test
+        working-directory: ./${{ matrix.projects }}
+        run: |
+          if [ "${{ matrix.projects }}" = "3coloring" ]; then
+            node ./tests/simple.js
+          fi
