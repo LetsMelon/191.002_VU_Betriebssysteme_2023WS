@@ -154,7 +154,7 @@ static int m_graph_find_node(graph_t *graph, int id, nodes_t *node) {
 
 int m_graph_get_same_color_edges(graph_t *graph, int u, edge_t **neighbors) {
   *neighbors = (edge_t *)malloc(sizeof(edge_t) * graph->nodes_count);
-  if (neighbors == NULL) {
+  if (*neighbors == NULL) {
     return -1;
   }
 
@@ -168,25 +168,25 @@ int m_graph_get_same_color_edges(graph_t *graph, int u, edge_t **neighbors) {
     return -1;
   }
 
-  int *u_neighbors = graph->edges.data[u_index];
   int found_neighbors = 0;
   for (int i = 0; i < graph->nodes_count; i += 1) {
     nodes_t neighbor_node = graph->nodes[i];
 
-    if (neighbor_node.id == node.id || u_neighbors[i] == 0) {
+    if (neighbor_node.id == node.id) {
       continue;
     }
 
+    if (graph->edges.data[u_index][i] == 0) {
+      continue;
+    }
+
+    // printf("DEBUG: checking at index %d to %d\n", u_index, i);
+
     if (node.color == neighbor_node.color) {
-      edge_t *e = malloc(sizeof(edge_t));
-      if (e == NULL) {
-        return -1;
-      }
+      edge_t *es = *neighbors;
 
-      e->node1 = node.id;
-      e->node2 = neighbor_node.id;
-
-      neighbors[found_neighbors] = e;
+      es[found_neighbors].node1 = node.id;
+      es[found_neighbors].node2 = neighbor_node.id;
 
       found_neighbors += 1;
     }
