@@ -2,10 +2,18 @@
 # @author Domenic Melcher <e12220857@student.tuwien.ac.at>
 # Makefile for 3coloring
 
+# Platform-specific commands
+UNAME := $(shell uname)
+
 CC = gcc
 DEFS = -D_BSD_SOURCE -D_SVID_SOURCE -D_POSIX_C_SOURCE=200809L
 CFLAGS = -Wall -g -std=c99 -pedantic $(DEFS)
+
+ifeq ($(UNAME),Darwin)
+LDFLAGS = -pthread -lpthread -lm
+else
 LDFLAGS = -pthread -lpthread -lm -lrt
+endif
 
 OBJECTS = parser.o edge.o matrix.o circular_buffer.o circular_buffer_helper.o shared_memory.o
 
