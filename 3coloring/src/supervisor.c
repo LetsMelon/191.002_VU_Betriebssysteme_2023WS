@@ -99,7 +99,10 @@ int main(int argc, char **argv) {
 
     while (shared_memory.buffer->count > 0) {
       edge_t *edges;
+      // printf("DEBUG: new solution.\n");
+
       int len = cbh_read_edges(shared_memory.buffer, &edges);
+      // printf("DEBUG: have it, len = %d\n", len);
 
       if (len < 0) {
         in_shutdown = true;
@@ -112,14 +115,14 @@ int main(int argc, char **argv) {
       if (len == 0) {
         in_shutdown = true;
 
-        free(edges);
-
         printf("The graph is 3-colorable!\n");
 
         break;
       }
 
       if (best_3coloring == -1 || len < best_3coloring) {
+        // printf("DEBUG: is better\n");
+
         best_3coloring = len;
 
         fprintf(stderr, "Solution with %d edges:", len);
@@ -127,9 +130,11 @@ int main(int argc, char **argv) {
           printf(" %d-%d", edges[i].node1, edges[i].node2);
         }
         printf("\n");
-
-        free(edges);
       }
+
+      // printf("DEBUG: next solution.\n");
+
+      free(edges);
     }
 
     sem_post(shared_memory.semaphore_buffer_mutex);
@@ -144,7 +149,8 @@ int main(int argc, char **argv) {
       break;
     }
 
-    // sleep(2);
+    // sleep for 100ms, so that other generators can have the opportunity to lock the mutex
+    usleep(100);
   }
 
   printf("Shutdown ...\n");
