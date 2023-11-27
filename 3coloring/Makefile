@@ -5,7 +5,7 @@
 CC = gcc
 DEFS = -D_BSD_SOURCE -D_SVID_SOURCE -D_POSIX_C_SOURCE=200809L
 CFLAGS = -Wall -g -std=c99 -pedantic $(DEFS)
-LDFLAGS = -pthread -lpthread -lm
+LDFLAGS = -pthread -lpthread -lm -lrt
 
 OBJECTS = parser.o edge.o matrix.o circular_buffer.o circular_buffer_helper.o shared_memory.o
 
