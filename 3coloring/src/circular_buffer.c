@@ -2,6 +2,7 @@
 #include <stdint.h>
 
 #include "circular_buffer.h"
+#include "edge.h"
 
 int cb_init(circular_buffer_t *buffer) {
   buffer->head = 0;
