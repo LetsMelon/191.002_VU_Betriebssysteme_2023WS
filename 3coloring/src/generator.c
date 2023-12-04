@@ -142,7 +142,7 @@ int main(int argc, char **argv) {
       for (int i = 0; i < same_color_neighbors_count; i += 1) {
         edge_t e = same_color_neighbors[i];
 
-        printf("DEBUG: %d->%d\n", e.node1, e.node2);
+        // printf("DEBUG: %d->%d\n", e.node1, e.node2);
         if (e.node1 != e.node2) {
           edges_without_zero[edges_without_zero_count] = e;
           edges_without_zero_count += 1;

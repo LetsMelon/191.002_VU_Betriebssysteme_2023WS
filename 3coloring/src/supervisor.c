@@ -149,11 +149,12 @@ int main(int argc, char **argv) {
       break;
     }
 
-    // sleep for 100ms, so that other generators can have the opportunity to lock the mutex
+    // sleep for 100ms, so that other generators can have the opportunity to
+    // lock the mutex
     usleep(100);
   }
 
-  printf("Shutdown ...\n");
+  // printf("Shutdown ...\n");
 
   sem_post(shared_memory.semaphore_in_shutdown);
 
