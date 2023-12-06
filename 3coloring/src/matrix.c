@@ -231,3 +231,50 @@ void m_graph_color_randomly(graph_t *graph) {
     graph->nodes[i].color = random_color();
   }
 }
+
+int m_graph_remove_same_edge_connections(graph_t *graph,
+                                         edge_t **edges_to_remove) {
+  int edges_had_been_removed = 0;
+
+  for (int node_index = 0; node_index < graph->nodes_count; node_index += 1) {
+    if (m_graph_is_3colorable(graph) == 1) {
+      break;
+    }
+
+    nodes_t node = graph->nodes[node_index];
+
+    for (int other_node_index = 0; other_node_index < graph->nodes_count;
+         other_node_index += 1) {
+      if (node_index == other_node_index) {
+        continue;
+      }
+
+      // TODO refactor into own method `bool m_g_nodes_have_edge(graph_t *graph,
+      // int n1_index, int n2_index)`
+      if (graph->edges.data[node_index][other_node_index] != 1) {
+        continue;
+      }
+
+      nodes_t other_node = graph->nodes[other_node_index];
+
+      if (node.color != other_node.color) {
+        continue;
+      }
+
+      // printf("CHECK: %d (%llu) -> %d (%llu)\n", node.id, node.color,
+      //        other_node.id, other_node.color);
+
+      (*edges_to_remove)[edges_had_been_removed].node1 = node.id;
+      (*edges_to_remove)[edges_had_been_removed].node2 = other_node.id;
+
+      // TODO refactor into own method `void m_g_remove_edge(graph_t *graph,
+      // int n1_index, int n2_index)`
+      graph->edges.data[node_index][other_node_index] = 0;
+      graph->edges.data[other_node_index][node_index] = 0;
+
+      edges_had_been_removed += 1;
+    }
+  }
+
+  return edges_had_been_removed;
+}

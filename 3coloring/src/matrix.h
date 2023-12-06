@@ -40,4 +40,7 @@ bool m_graph_is_3colorable(graph_t *graph);
 
 void m_graph_color_randomly(graph_t *graph);
 
+int m_graph_remove_same_edge_connections(graph_t *graph,
+                                         edge_t **edges_to_remove);
+
 #endif
