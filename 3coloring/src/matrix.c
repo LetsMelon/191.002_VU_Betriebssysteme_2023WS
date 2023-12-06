@@ -10,6 +10,12 @@ static uint64_t COLORS_COUNT = 3;
 
 static uint64_t random_color(void) { return COLORS[random() % COLORS_COUNT]; }
 
+static void m_graph_color_randomly(graph_t *graph) {
+  for (int i = 0; i < graph->nodes_count; i++) {
+    graph->nodes[i].color = random_color();
+  }
+}
+
 static int am_init(adjacent_matrix_t *adjacent_matrix, int n) {
   int **am = (int **)malloc(sizeof(int *) * n);
   if (am == NULL) {
@@ -141,95 +147,14 @@ void m_graph_free(graph_t *graph) {
   graph->nodes_count = 0;
 }
 
-static int m_graph_find_node(graph_t *graph, int id, nodes_t *node) {
-  for (int i = 0; i < graph->nodes_count; i++) {
-    if (graph->nodes[i].id == id) {
-      *node = graph->nodes[i];
-      return 0;
-    }
-  }
-
-  return -1;
+static bool m_graph_nodes_have_connection(graph_t *graph, int n1_index,
+                                          int n2_index) {
+  return graph->edges.data[n1_index][n2_index] == 1;
 }
 
-int m_graph_get_same_color_edges(graph_t *graph, int u, edge_t **neighbors) {
-  *neighbors = (edge_t *)malloc(sizeof(edge_t) * graph->nodes_count);
-  if (*neighbors == NULL) {
-    return -1;
-  }
-
-  nodes_t node;
-  if (m_graph_find_node(graph, u, &node) != 0) {
-    return -1;
-  }
-
-  int u_index = m_graph_get_index_from_node(graph, u);
-  if (u_index < 0) {
-    return -1;
-  }
-
-  int found_neighbors = 0;
-  for (int i = 0; i < graph->nodes_count; i += 1) {
-    nodes_t neighbor_node = graph->nodes[i];
-
-    if (neighbor_node.id == node.id) {
-      continue;
-    }
-
-    if (graph->edges.data[u_index][i] == 0) {
-      continue;
-    }
-
-    // printf("DEBUG: checking at index %d to %d\n", u_index, i);
-
-    if (node.color == neighbor_node.color) {
-      edge_t *es = *neighbors;
-
-      es[found_neighbors].node1 = node.id;
-      es[found_neighbors].node2 = neighbor_node.id;
-
-      found_neighbors += 1;
-    }
-  }
-
-  return found_neighbors;
-}
-
-void m_graph_remove_edge(graph_t *graph, edge_t *edge) {
-  int n1_index = m_graph_get_index_from_node(graph, edge->node1);
-  int n2_index = m_graph_get_index_from_node(graph, edge->node2);
-
-  if (n1_index < 0 || n2_index < 0) {
-    return;
-  }
-
-  graph->edges_count -= 2;
-
+static void m_graph_remove_edge(graph_t *graph, int n1_index, int n2_index) {
   graph->edges.data[n1_index][n2_index] = 0;
   graph->edges.data[n2_index][n1_index] = 0;
-}
-
-bool m_graph_is_3colorable(graph_t *graph) {
-  for (int i = 0; i < graph->nodes_count; i += 1) {
-    edge_t *neighbors;
-    int n = m_graph_get_same_color_edges(graph, graph->nodes[i].id, &neighbors);
-
-    if (neighbors != NULL) {
-      free(neighbors);
-    }
-
-    if (n != 0) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-void m_graph_color_randomly(graph_t *graph) {
-  for (int i = 0; i < graph->nodes_count; i++) {
-    graph->nodes[i].color = random_color();
-  }
 }
 
 int m_graph_remove_same_edge_connections(graph_t *graph,
@@ -237,9 +162,9 @@ int m_graph_remove_same_edge_connections(graph_t *graph,
   int edges_had_been_removed = 0;
 
   for (int node_index = 0; node_index < graph->nodes_count; node_index += 1) {
-    if (m_graph_is_3colorable(graph) == 1) {
-      break;
-    }
+    // if (m_graph_is_3colorable(graph) == 1) {
+    //   break;
+    // }
 
     nodes_t node = graph->nodes[node_index];
 
@@ -249,9 +174,8 @@ int m_graph_remove_same_edge_connections(graph_t *graph,
         continue;
       }
 
-      // TODO refactor into own method `bool m_g_nodes_have_edge(graph_t *graph,
-      // int n1_index, int n2_index)`
-      if (graph->edges.data[node_index][other_node_index] != 1) {
+      if (m_graph_nodes_have_connection(graph, node_index, other_node_index) ==
+          false) {
         continue;
       }
 
@@ -267,10 +191,7 @@ int m_graph_remove_same_edge_connections(graph_t *graph,
       (*edges_to_remove)[edges_had_been_removed].node1 = node.id;
       (*edges_to_remove)[edges_had_been_removed].node2 = other_node.id;
 
-      // TODO refactor into own method `void m_g_remove_edge(graph_t *graph,
-      // int n1_index, int n2_index)`
-      graph->edges.data[node_index][other_node_index] = 0;
-      graph->edges.data[other_node_index][node_index] = 0;
+      m_graph_remove_edge(graph, node_index, other_node_index);
 
       edges_had_been_removed += 1;
     }

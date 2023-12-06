@@ -32,14 +32,6 @@ int m_graph_init(graph_t *graph, edge_t *edges, int edges_count);
 
 void m_graph_free(graph_t *graph);
 
-int m_graph_get_same_color_edges(graph_t *graph, int u, edge_t **neighbors);
-
-void m_graph_remove_edge(graph_t *graph, edge_t *edge);
-
-bool m_graph_is_3colorable(graph_t *graph);
-
-void m_graph_color_randomly(graph_t *graph);
-
 int m_graph_remove_same_edge_connections(graph_t *graph,
                                          edge_t **edges_to_remove);
 
