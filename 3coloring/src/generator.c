@@ -100,86 +100,43 @@ int main(int argc, char **argv) {
   int n = edges.num;
   sl_free(&edges);
 
+  edge_t *edges_to_remove = malloc(sizeof(edge_t) * n);
+  if (edges_to_remove == NULL) {
+    free(parsed_edges);
+
+    sm_close(&shared_memory, false);
+
+    return EXIT_FAILURE;
+  }
+
   while (true) {
     graph_t graph;
     m_graph_init(&graph, parsed_edges, n);
 
-    int edges_without_zero_count = 0;
-    edge_t *edges_without_zero =
-        (edge_t *)malloc(sizeof(edge_t) * graph.edges_count);
-    if (edges_without_zero == NULL) {
-      m_graph_free(&graph);
-      free(parsed_edges);
-      sm_close(&shared_memory, false);
-
-      return EXIT_FAILURE;
-    }
-
-    int current_start_index = 0;
-    while (m_graph_is_3colorable(&graph) == false &&
-           current_start_index < graph.nodes_count) {
-
-      edge_t *same_color_neighbors;
-      int same_color_neighbors_count = m_graph_get_same_color_edges(
-          &graph, graph.nodes[current_start_index].id, &same_color_neighbors);
-
-      if (same_color_neighbors_count == 0) {
-        free(same_color_neighbors);
-
-        current_start_index += 1;
-
-        continue;
-      }
-
-      if (same_color_neighbors_count == -1) {
-        m_graph_free(&graph);
-        free(parsed_edges);
-        sm_close(&shared_memory, false);
-
-        return EXIT_FAILURE;
-      }
-
-      for (int i = 0; i < same_color_neighbors_count; i += 1) {
-        edge_t e = same_color_neighbors[i];
-
-        // printf("DEBUG: %d->%d\n", e.node1, e.node2);
-        if (e.node1 != e.node2) {
-          edges_without_zero[edges_without_zero_count] = e;
-          edges_without_zero_count += 1;
-
-          m_graph_remove_edge(&graph, &e);
-        }
-      }
-
-      free(same_color_neighbors);
-    }
+    int edges_to_remove_count =
+        m_graph_remove_same_edge_connections(&graph, &edges_to_remove);
 
     m_graph_free(&graph);
 
     if (sem_trywait(shared_memory.semaphore_in_shutdown) == 0) {
       sem_post(shared_memory.semaphore_in_shutdown);
-
-      free(edges_without_zero);
-
       break;
     }
 
     sem_wait(shared_memory.semaphore_buffer_mutex);
-    if (cbh_write_edges(shared_memory.buffer, edges_without_zero,
-                        edges_without_zero_count) < 0) {
-      m_graph_free(&graph);
+    if (cbh_write_edges(shared_memory.buffer, edges_to_remove,
+                        edges_to_remove_count) < 0) {
       free(parsed_edges);
+      free(edges_to_remove);
+
       sm_close(&shared_memory, false);
 
       return EXIT_FAILURE;
     }
     sem_post(shared_memory.semaphore_buffer_mutex);
-
-    free(edges_without_zero);
-
-    printf("\n");
   }
 
+  free(edges_to_remove);
   free(parsed_edges);
 
   sm_close(&shared_memory, false);
