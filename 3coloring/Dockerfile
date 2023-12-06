@@ -14,3 +14,14 @@ RUN cargo install ugdb
 WORKDIR /3coloring
 
 COPY . .
+
+# FROM centos:centos7.9.2009
+# 
+# RUN yum install -y make gcc curl gdb \
+#     && curl https://sh.rustup.rs -sSf | sh -s -- -y
+# 
+# ENV PATH=$PATH:/root/.cargo/bin/
+# 
+# WORKDIR /3coloring
+# 
+# COPY . .
