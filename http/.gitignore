@@ -1,0 +1,8 @@
+out.txt
+html/
+latex/
+*.stderr
+*.stdout
+*.returncodes
+server
+client
