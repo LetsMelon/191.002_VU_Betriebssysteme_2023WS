@@ -15,7 +15,7 @@ else
 LDFLAGS = -pthread -lpthread -lm -lrt
 endif
 
-OBJECTS = parser.o
+OBJECTS = parser.o http.o
 
 .PHONY: all clean .FORCE build-container run-container check-memory-leaks package
 all: server client
@@ -35,6 +35,7 @@ dummy_generator: dummy_generator.o $(OBJECTS)
 server.o: ./src/server.c
 client.o: ./src/client.c
 parser.o: ./src/parser.c
+http.o: ./src/http.c
 
 clean:
 	rm -rf *.o server client *.tar.gz ./html ./latex *.stderr *.stdout *.returncodes
