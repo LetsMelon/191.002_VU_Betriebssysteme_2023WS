@@ -18,15 +18,12 @@ endif
 OBJECTS = parser.o edge.o matrix.o circular_buffer.o circular_buffer_helper.o shared_memory.o
 
 .PHONY: all clean .FORCE build-container run-container check-memory-leaks package
-all: supervisor generator dummy_generator
+all: supervisor generator
 
 supervisor: supervisor.o $(OBJECTS)
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDFLAGS)
 
 generator: generator.o $(OBJECTS)
-	$(CC) $(LDFLAGS) -o $@ $^ $(LDFLAGS)
-
-dummy_generator: dummy_generator.o $(OBJECTS)
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDFLAGS)
 
 %.o: ./src/%.c
@@ -40,7 +37,6 @@ matrix.o: ./src/matrix.c
 circular_buffer.o: ./src/circular_buffer.c
 shared_memory.o: ./src/shared_memory.c
 circular_buffer_helper.o: ./src/circular_buffer_helper.c
-dummy_generator.o: ./src/dummy_generator.c
 
 clean:
 	rm -rf *.o supervisor generator dummy_generator melcher_3coloring.tar.gz ./html ./latex *.stderr *.stdout *.returncodes

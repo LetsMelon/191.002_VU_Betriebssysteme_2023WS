@@ -45,6 +45,7 @@ volatile bool in_shutdown = false; // Signal for shutdown
  * @brief Signal handler function for handling SIGINT.
  *
  * @param signal The signal received by the handler.
+ * @details global variables: in_shutdown
  */
 void handle_shutdown(int signal) {
   sem_post(shared_memory.semaphore_in_shutdown);
