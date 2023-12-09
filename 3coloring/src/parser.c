@@ -73,19 +73,19 @@ static int sl_add(string_list_t *list, char *value) {
 
 void sl_print(string_list_t *list) {
   // #ifdef DDEBUG
-  printf("string_list_t {\n");
-  printf("\tnum: %d,\n", list->num);
-  printf("\tcapacity: %d,\n", list->capacity);
-  printf("\tvalues: [");
+  fprintf(stderr, "string_list_t {\n");
+  fprintf(stderr, "\tnum: %d,\n", list->num);
+  fprintf(stderr, "\tcapacity: %d,\n", list->capacity);
+  fprintf(stderr, "\tvalues: [");
 
   for (int i = 0; i < list->num; i += 1) {
-    printf("'%s'", list->values[i]);
+    fprintf(stderr, "'%s'", list->values[i]);
 
     if ((i + 1) < list->num)
-      printf(", ");
+      fprintf(stderr, ", ");
   }
 
-  printf("]\n}\n");
+  fprintf(stderr, "]\n}\n");
   // #endif
 }
 

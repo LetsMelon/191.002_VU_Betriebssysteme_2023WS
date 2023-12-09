@@ -1,7 +1,7 @@
 /**
  * @file supervisor.c
  * @author Domenic Melcher <e12220857@student.tuwien.ac.at>
- * @date 12.11.2023
+ * @date 09.12.2023
  *
  * @brief Supervisor process managing shared memory for solutions
  *
@@ -137,6 +137,7 @@ int main(int argc, char **argv) {
   assert(sizeof(circular_buffer_t) <= 4096);
 
   if (sm_open(&shared_memory, true) < 0) {
+    fprintf(stderr, "%s: Error while opening shared memory.\n", argv[0]);
     return EXIT_FAILURE;
   };
 
@@ -212,8 +213,10 @@ int main(int argc, char **argv) {
     if (arguments.limit != -1 && solutions_encountered >= arguments.limit &&
         in_shutdown == false) {
       if (best_3coloring < 0) {
-        fprintf(stderr, "Supervisor wasn't able to read a single value from a "
-                        "generator\n");
+        fprintf(stderr,
+                "%s: Supervisor wasn't able to read a single value from a "
+                "generator\n",
+                argv[0]);
 
         sem_post(shared_memory.semaphore_in_shutdown);
 

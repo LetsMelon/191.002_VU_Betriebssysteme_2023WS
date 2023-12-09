@@ -76,24 +76,24 @@ static void am_free(adjacent_matrix_t *adjacent_matrix) {
 }
 
 void m_am_print(adjacent_matrix_t *adjacent_matrix) {
-  printf("        |");
+  fprintf(stderr, "        |");
   for (int i = 0; i < adjacent_matrix->n; i += 1) {
-    printf("\t%d |", i);
+    fprintf(stderr, "\t%d |", i);
   }
-  printf("\n--------|--");
+  fprintf(stderr, "\n--------|--");
   for (int i = 0; i < adjacent_matrix->n; i += 1) {
-    printf("--------");
+    fprintf(stderr, "--------");
   }
-  printf("\n");
+  fprintf(stderr, "\n");
 
   for (int i = 0; i < adjacent_matrix->n; i += 1) {
-    printf("%d\t|", i);
+    fprintf(stderr, "%d\t|", i);
 
     for (int j = 0; j < adjacent_matrix->n; j += 1) {
 
-      printf("\t%d", adjacent_matrix->data[i][j]);
+      fprintf(stderr, "\t%d", adjacent_matrix->data[i][j]);
     }
-    printf(" |\n");
+    fprintf(stderr, " |\n");
   }
 }
 
