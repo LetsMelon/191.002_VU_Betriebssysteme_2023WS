@@ -25,6 +25,11 @@ typedef struct {
   sem_t *semaphore_in_shutdown;  /**< Semaphore for signaling shutdown */
   sem_t *semaphore_buffer_mutex; /**< Semaphore for buffer access control */
 
+  sem_t *
+      semaphore_buffer_free_space; /**< Semaphore for tracking the free space */
+  sem_t *
+      semaphore_buffer_used_space; /**< Semaphore for tracking the used space */
+
   int fd; /**< File descriptor for shared memory */
 } shared_memory_t;
 

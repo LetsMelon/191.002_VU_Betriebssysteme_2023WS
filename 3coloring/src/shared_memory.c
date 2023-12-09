@@ -16,6 +16,7 @@
 
 #include <unistd.h>
 
+#include "circular_buffer.h"
 #include "shared_memory.h"
 
 /*! \def SEM_SHUTDOWN
@@ -26,8 +27,18 @@
     \brief Name for the buffer mutex semaphore
 */
 
+/*! \def SEM_BUFFER_FREE_SPACE
+    \brief Name for the buffer free space semaphore
+*/
+
+/*! \def SEM_BUFFER_USED_SPACE
+    \brief Name for the buffer used space semaphore
+*/
+
 #define SEM_SHUTDOWN "/12220857_sh"
 #define SEM_MUTEX "/12220857_mut"
+#define SEM_BUFFER_FREE_SPACE "/12220857_bfs"
+#define SEM_BUFFER_USED_SPACE "/12220857_bus"
 
 /*! \def SHM_BUFFER
     \brief Name for the shared memory
@@ -37,10 +48,12 @@
 
 int sm_open(shared_memory_t *shared_memory, bool is_master) {
   // ! Comment out if a crash happened
-  // if (is_master == true) {
-  //   sem_unlink(SEM_SHUTDOWN);
-  //   sem_unlink(SEM_MUTEX);
-  // }
+  if (is_master == true) {
+    sem_unlink(SEM_SHUTDOWN);
+    sem_unlink(SEM_MUTEX);
+    sem_unlink(SEM_BUFFER_FREE_SPACE);
+    sem_unlink(SEM_BUFFER_USED_SPACE);
+  }
 
   // Initialize or open semaphores
 
@@ -60,6 +73,41 @@ int sm_open(shared_memory_t *shared_memory, bool is_master) {
 
     sem_close(shared_memory->semaphore_in_shutdown);
     sem_unlink(SEM_SHUTDOWN);
+
+    return -1;
+  }
+
+  shared_memory->semaphore_buffer_used_space =
+      (is_master == true)
+          ? sem_open(SEM_BUFFER_USED_SPACE, O_CREAT | O_EXCL, 0660, 0)
+          : sem_open(SEM_BUFFER_USED_SPACE, O_RDWR);
+  if (shared_memory->semaphore_buffer_used_space == SEM_FAILED) {
+    fprintf(stderr, "Error: Semaphore 'semaphore_buffer_used_space' failed.\n");
+
+    sem_close(shared_memory->semaphore_in_shutdown);
+    sem_unlink(SEM_SHUTDOWN);
+
+    sem_close(shared_memory->semaphore_buffer_mutex);
+    sem_unlink(SEM_MUTEX);
+
+    return -1;
+  }
+
+  shared_memory->semaphore_buffer_free_space =
+      (is_master == true)
+          ? sem_open(SEM_BUFFER_FREE_SPACE, O_CREAT | O_EXCL, 0660, BUFFER_SIZE)
+          : sem_open(SEM_BUFFER_FREE_SPACE, O_RDWR);
+  if (shared_memory->semaphore_buffer_free_space == SEM_FAILED) {
+    fprintf(stderr, "Error: Semaphore 'semaphore_buffer_free_space' failed.\n");
+
+    sem_close(shared_memory->semaphore_in_shutdown);
+    sem_unlink(SEM_SHUTDOWN);
+
+    sem_close(shared_memory->semaphore_buffer_mutex);
+    sem_unlink(SEM_MUTEX);
+
+    sem_close(shared_memory->semaphore_buffer_used_space);
+    sem_unlink(SEM_BUFFER_USED_SPACE);
 
     return -1;
   }
@@ -144,6 +192,9 @@ int sm_close(shared_memory_t *shared_memory, bool is_master) {
   // Close semaphores and unmap shared memory
   error |= sem_close(shared_memory->semaphore_in_shutdown);
   error |= sem_close(shared_memory->semaphore_buffer_mutex);
+  error |= sem_close(shared_memory->semaphore_buffer_free_space);
+  error |= sem_close(shared_memory->semaphore_buffer_used_space);
+
   error |= munmap(shared_memory->buffer, sizeof(circular_buffer_t));
   error |= close(shared_memory->fd);
 
@@ -151,6 +202,9 @@ int sm_close(shared_memory_t *shared_memory, bool is_master) {
   if (is_master == true) {
     error |= sem_unlink(SEM_SHUTDOWN);
     error |= sem_unlink(SEM_MUTEX);
+    error |= sem_unlink(SEM_BUFFER_USED_SPACE);
+    error |= sem_unlink(SEM_BUFFER_FREE_SPACE);
+
     error |= shm_unlink(SHM_BUFFER);
   }
 
