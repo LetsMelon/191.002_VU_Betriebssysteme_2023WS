@@ -20,6 +20,7 @@
  */
 
 #include <assert.h>
+#include <limits.h>
 #include <semaphore.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -135,6 +136,10 @@ int arguments_init(arguments_t *arguments, int argc, char **argv) {
 int main(int argc, char **argv) {
   // ! The struct 'circular_buffer_t' must be smaller than 4096 bytes.
   assert(sizeof(circular_buffer_t) <= 4096);
+#ifdef DDEBUG
+  fprintf(stderr, "sizeof(circular_buffer_t) = %d, BUFFER_SIZE = %d\n",
+          (int)sizeof(circular_buffer_t), BUFFER_SIZE);
+#endif
 
   if (sm_open(&shared_memory, true) < 0) {
     fprintf(stderr, "%s: Error while opening shared memory.\n", argv[0]);
@@ -153,90 +158,90 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
+#ifdef DDEBUG
   fprintf(stderr, "limit = %d, delay = %d, visualization = %s\n",
           arguments.limit, arguments.delay,
           arguments.flag_p == true ? "true" : "false");
+#endif
 
   sem_post(shared_memory.semaphore_buffer_mutex);
 
   sleep(arguments.delay);
 
   int solutions_encountered = 0;
-  int best_3coloring = -1;
+  int best_3coloring = INT_MAX;
   while (in_shutdown == false) {
-    sem_wait(shared_memory.semaphore_buffer_mutex);
+    solution_t solution;
+    int read_solution_error = cbh_read_solution(&shared_memory, &solution);
 
-    while (shared_memory.buffer->count > 0) {
+    if (read_solution_error == -1) {
+      continue;
+    } else if (read_solution_error == -2) {
+      fprintf(stderr, "%s: Error while reading from shared memory.\n", argv[0]);
+
+      sem_post(shared_memory.semaphore_in_shutdown);
+      sm_close(&shared_memory, true);
+
+      return EXIT_FAILURE;
+    } else {
       solutions_encountered += 1;
-
-      edge_t *edges;
-      // printf("DEBUG: new solution.\n");
-
-      int len = cbh_read_edges(shared_memory.buffer, &edges);
-      // printf("DEBUG: have it, len = %d\n", len);
-
-      if (len < 0) {
-        in_shutdown = true;
-
-        fprintf(stderr, "Error: when reading from cb\n");
-
-        break;
-      }
+      int len = solution.len;
 
       if (len == 0) {
         in_shutdown = true;
-
-        printf("The graph is 3-colorable!\n");
+        best_3coloring = 0;
 
         break;
       }
 
-      if (best_3coloring == -1 || len < best_3coloring) {
-        // printf("DEBUG: is better\n");
-
+      if (len < best_3coloring) {
         best_3coloring = len;
 
         fprintf(stderr, "Solution with %d edges:", len);
         for (int i = 0; i < len; i += 1) {
-          fprintf(stderr, " %d-%d", edges[i].node1, edges[i].node2);
+          fprintf(stderr, " %d-%d", solution.edges[i].node1,
+                  solution.edges[i].node2);
         }
         fprintf(stderr, "\n");
       }
 
-      // printf("DEBUG: next solution.\n");
-
-      free(edges);
-    }
-
-    sem_post(shared_memory.semaphore_buffer_mutex);
-
-    if (arguments.limit != -1 && solutions_encountered >= arguments.limit &&
-        in_shutdown == false) {
-      if (best_3coloring < 0) {
-        fprintf(stderr,
-                "%s: Supervisor wasn't able to read a single value from a "
-                "generator\n",
-                argv[0]);
-
-        sem_post(shared_memory.semaphore_in_shutdown);
-
-        sm_close(&shared_memory, true);
-
-        return EXIT_FAILURE;
+      if (arguments.limit != -1 && solutions_encountered >= arguments.limit &&
+          in_shutdown == false) {
+        break;
       }
-      printf("The graph might not be 3-colorable, best solution removes %d "
-             "edges.\n",
-             best_3coloring);
-
-      break;
     }
 
     // sleep for 50ms, so that other generators can have the opportunity to
     // lock the mutex
-    usleep(50);
+    // usleep(50);
   }
 
+  switch (best_3coloring) {
+  case INT_MAX:
+    fprintf(stderr,
+            "%s: Supervisor wasn't able to read a single value from a "
+            "generator\n",
+            argv[0]);
+
+    sem_post(shared_memory.semaphore_in_shutdown);
+    sm_close(&shared_memory, true);
+
+    return EXIT_FAILURE;
+
+  case 0:
+    printf("The graph is 3-colorable!\n");
+    break;
+
+  default:
+    printf("The graph might not be 3-colorable, best solution removes %d "
+           "edges.\n",
+           best_3coloring);
+    break;
+  }
+
+#ifdef DDEBUG
   fprintf(stderr, "Shutdown ...\n");
+#endif
 
   sem_post(shared_memory.semaphore_in_shutdown);
 

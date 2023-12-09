@@ -9,6 +9,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "circular_buffer.h"
 #include "edge.h"
 #include "matrix.h"
 
@@ -43,17 +44,17 @@ int main(void) {
     graph_t graph;
     m_graph_init(&graph, edges, edges_count);
 
-    int edges_to_remove_count =
-        m_graph_remove_same_edge_connections(&graph, &edges_to_remove);
+    solution_t solution;
+    m_graph_remove_same_edge_connections(&graph, &solution);
 
-    if (edges_to_remove_count < best) {
-      best = edges_to_remove_count;
-      printf("%d\n", edges_to_remove_count);
+    if (solution.len < best) {
+      best = solution.len;
+      printf("%d\n", solution.len);
     }
 
     m_graph_free(&graph);
 
-    if (edges_to_remove_count == 0) {
+    if (solution.len == 0) {
       break;
     }
   }

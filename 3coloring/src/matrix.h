@@ -13,6 +13,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "circular_buffer.h"
 #include "edge.h"
 
 /**
@@ -69,10 +70,8 @@ void m_graph_free(graph_t *graph);
 /**
  * @brief Removes same edge connections from the graph.
  * @param graph Pointer to the graph.
- * @param edges_to_remove Pointer to an array of edges that had been removed.
- * @return Returns the number of removed edges, -> len(edges_to_remove).
+ * @param solution Pointer to the removed edges.
  */
-int m_graph_remove_same_edge_connections(graph_t *graph,
-                                         edge_t **edges_to_remove);
+void m_graph_remove_same_edge_connections(graph_t *graph, solution_t *solution);
 
-#endif
+#endif /* _M */

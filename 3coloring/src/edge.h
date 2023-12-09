@@ -9,6 +9,12 @@
 #ifndef _E
 #define _E
 
+/*! \def MAX_EDGES
+    \brief Max edges the program allows to be deleted from the graph
+*/
+
+#define MAX_EDGES 32
+
 /**
  * @struct edge_t
  * @brief Structure representing an edge between two nodes.

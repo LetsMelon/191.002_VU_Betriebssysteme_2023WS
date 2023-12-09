@@ -151,9 +151,8 @@ int main(int argc, char **argv) {
     graph_t graph;
     m_graph_init(&graph, parsed_edges, n);
 
-    int edges_to_remove_count =
-        m_graph_remove_same_edge_connections(&graph, &edges_to_remove);
-
+    solution_t solution;
+    m_graph_remove_same_edge_connections(&graph, &solution);
     m_graph_free(&graph);
 
     if (sem_trywait(shared_memory.semaphore_in_shutdown) == 0) {
@@ -162,87 +161,34 @@ int main(int argc, char **argv) {
       break;
     }
 
-    if (cbh_edges_size(edges_to_remove_count) > BUFFER_SIZE) {
-      fprintf(stderr,
-              "%s: Error edges to remove is too big for the circular buffer.\n",
-              argv[0]);
-
-      free(parsed_edges);
+    if (sem_wait(shared_memory.semaphore_buffer_mutex) != 0) {
       free(edges_to_remove);
+      free(parsed_edges);
 
       sm_close(&shared_memory, false);
 
       return EXIT_FAILURE;
     }
 
-    sem_wait(shared_memory.semaphore_buffer_mutex);
-    fprintf(stderr, "Writing edges to shared memory: %d, space left: %ld\n",
-            edges_to_remove_count, cbh_buffer_free_space(shared_memory.buffer));
+    fprintf(stderr, "Writing edges to shared memory: %d\n", solution.len);
 
-    // there is at the moment not enough space in the circular buffer to write
-    // everything to
-    /*
-    int checked_for_space = 0;
-    while (cbh_buffer_has_the_capacity_for_edges(
-               shared_memory.buffer, edges_to_remove_count) == false) {
-      fprintf(
-          stderr,
-          "Not enough free space in the buffer for the edges. Waiting...\n");
-
-      // release sem
-      sem_post(shared_memory.semaphore_buffer_mutex);
-
-      if (checked_for_space > 10) {
-        fprintf(stderr, "Couldn't get enough space to write the answer to the "
-                        "circular buffer.\n");
-
-        free(parsed_edges);
-        free(edges_to_remove);
-
-        sm_close(&shared_memory, false);
-
-        return EXIT_FAILURE;
-      }
-
-      // wait 10ms
-      usleep(10);
-
-      // check for shutdown
-      if (sem_trywait(shared_memory.semaphore_in_shutdown) == 0) {
-        fprintf(stderr,
-                "Received shutdown while waiting for space in the buffer\n");
-        sem_post(shared_memory.semaphore_in_shutdown);
-
-        goto end_event_loop;
-      }
-
-      checked_for_space += 1;
-
-      // wait for sem
-      sem_wait(shared_memory.semaphore_buffer_mutex);
-    }
-    */
-
-    if (cbh_write_edges(shared_memory.buffer, edges_to_remove,
-                        edges_to_remove_count) < 0) {
-      // TODO maybe ignore this error message? or wait until there is enough
-      // room in the buffer for the data?
-      fprintf(stderr, "%s: Error when writing to the circular buffer.\n",
-              argv[0]);
-
-      free(parsed_edges);
+    if (cbh_write_solution(&shared_memory, solution) != 0) {
       free(edges_to_remove);
+      free(parsed_edges);
 
-      sem_post(shared_memory.semaphore_buffer_mutex);
       sm_close(&shared_memory, false);
 
       return EXIT_FAILURE;
     }
-    sem_post(shared_memory.semaphore_buffer_mutex);
 
-    // sleep for 100ms, so that other generators or the supervisor can have the
-    // opportunity to lock the mutex
-    usleep(100);
+    if (sem_post(shared_memory.semaphore_buffer_mutex) != 0) {
+      free(edges_to_remove);
+      free(parsed_edges);
+
+      sm_close(&shared_memory, false);
+
+      return EXIT_FAILURE;
+    }
   }
 
   free(edges_to_remove);

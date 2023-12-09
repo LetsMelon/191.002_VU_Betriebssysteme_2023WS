@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "circular_buffer.h"
 #include "matrix.h"
 
 // Static array of colors for nodes
@@ -202,9 +203,9 @@ static bool m_graph_nodes_have_connection(graph_t *graph, int n1_index,
   return graph->edges.data[n1_index][n2_index] == 1;
 }
 
-int m_graph_remove_same_edge_connections(graph_t *graph,
-                                         edge_t **edges_to_remove) {
-  int edges_had_been_removed = 0;
+void m_graph_remove_same_edge_connections(graph_t *graph,
+                                          solution_t *solution) {
+  solution->len = 0;
 
   for (int node_index = 0; node_index < graph->nodes_count; node_index += 1) {
     // if (m_graph_is_3colorable(graph) == 1) {
@@ -230,17 +231,12 @@ int m_graph_remove_same_edge_connections(graph_t *graph,
         continue;
       }
 
-      // printf("CHECK: %d (%llu) -> %d (%llu)\n", node.id, node.color,
-      //        other_node.id, other_node.color);
-
-      (*edges_to_remove)[edges_had_been_removed].node1 = node.id;
-      (*edges_to_remove)[edges_had_been_removed].node2 = other_node.id;
+      solution->edges[solution->len].node1 = node.id;
+      solution->edges[solution->len].node2 = other_node.id;
 
       m_graph_set_edge(graph, node_index, other_node_index, false);
 
-      edges_had_been_removed += 1;
+      solution->len += 1;
     }
   }
-
-  return edges_had_been_removed;
 }
