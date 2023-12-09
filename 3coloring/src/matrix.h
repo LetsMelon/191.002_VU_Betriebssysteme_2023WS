@@ -1,7 +1,7 @@
 /**
  * @file matrix.h
  * @author Domenic Melcher <e12220857@student.tuwien.ac.at>
- * @date 12.11.2023
+ * @date 09.12.2023
  *
  * @brief Header file defining a graph structure optimized for the usage of the
  * edges in between nodes.

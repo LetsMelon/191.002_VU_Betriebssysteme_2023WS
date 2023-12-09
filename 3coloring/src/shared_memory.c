@@ -1,7 +1,7 @@
 /**
  * @file shared_memory.c
  * @author Domenic Melcher <e12220857@student.tuwien.ac.at>
- * @date 12.11.2023
+ * @date 09.12.2023
  *
  * @brief Contains functions for managing shared memory and semaphores.
  */
