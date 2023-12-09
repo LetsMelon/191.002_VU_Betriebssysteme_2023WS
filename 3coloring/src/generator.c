@@ -176,7 +176,7 @@ int main(int argc, char **argv) {
     }
 
     sem_wait(shared_memory.semaphore_buffer_mutex);
-    fprintf(stderr, "Writing edges to shared memory: %d, space left: %lld\n",
+    fprintf(stderr, "Writing edges to shared memory: %d, space left: %ld\n",
             edges_to_remove_count, cbh_buffer_free_space(shared_memory.buffer));
 
     // there is at the moment not enough space in the circular buffer to write
