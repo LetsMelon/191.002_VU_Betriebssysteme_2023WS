@@ -9,3 +9,6 @@ supervisor
 generator
 generator.*/
 dummy_generator
+*.stderr
+*.stdout
+*.returncodes

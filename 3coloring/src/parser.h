@@ -3,7 +3,7 @@
  * @author Domenic Melcher <e12220857@student.tuwien.ac.at>
  * @date 12.11.2023
  *
- * @brief Provides utility functions for parsing float complex values
+ * @brief Provides utility functions for parsing
  */
 
 #ifndef _P
@@ -14,11 +14,14 @@
 
 #include "edge.h"
 
+/**
+ * @struct string_list_t
+ * @brief Structure to hold an array of strings.
+ */
 typedef struct {
   char **values; ///< Internal array of owned char*
-
-  int num;      ///< How many items are stored in the array 'values'
-  int capacity; ///< How many items the array 'values' can store
+  int num;       ///< How many items are stored in the array 'values'
+  int capacity;  ///< How many items the array 'values' can store
 } string_list_t;
 
 /**
@@ -43,10 +46,24 @@ void sl_print(string_list_t *list);
  * @param list the list to store the parts.
  * @return Returns 0 if non error has been encountered
  */
-int p_split_at(char *input, char pattern, string_list_t *list);
+int p_split_at(const char *input, char pattern, string_list_t *list);
 
-int p_parse_as_int(char *input, int *value);
+/**
+ * Parses the input as an int
+ * @brief Parses the input as an int.
+ * @param input the input char*.
+ * @param value Pointer to where the value should be stored.
+ * @return Returns 0 if non error has been encountered
+ */
+int p_parse_as_int(const char *input, int *value);
 
-int p_parse_as_edge(char *input, edge_t *edge);
+/**
+ * Parses the input as an edge_t
+ * @brief Parses the input as an edge_t.
+ * @param input the input char*.
+ * @param edge Pointer to where the edge should be stored.
+ * @return Returns 0 if non error has been encountered
+ */
+int p_parse_as_edge(const char *input, edge_t *edge);
 
 #endif /* _P */

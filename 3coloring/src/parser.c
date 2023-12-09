@@ -1,3 +1,11 @@
+/**
+ * @file parser.c
+ * @author Domenic Melcher <e12220857@student.tuwien.ac.at>
+ * @date 12.11.2023
+ *
+ * @brief Provides utility functions for parsing
+ */
+
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
@@ -37,7 +45,7 @@ void sl_free(string_list_t *list) {
 /**
  * @brief Helper function to add an item to the given list.
  */
-int sl_add(string_list_t *list, char *value) {
+static int sl_add(string_list_t *list, char *value) {
   if (list->capacity == 0) {
     if (sl_init(list) != 0) {
       return -1;
@@ -81,7 +89,7 @@ void sl_print(string_list_t *list) {
   // #endif
 }
 
-int p_split_at(char *input, char pattern, string_list_t *list) {
+int p_split_at(const char *input, char pattern, string_list_t *list) {
   if (sl_init(list) != 0) {
     return -1;
   }
@@ -129,22 +137,20 @@ int p_split_at(char *input, char pattern, string_list_t *list) {
   return 0;
 }
 
-int p_parse_as_int(char *input, int *value) {
+int p_parse_as_int(const char *input, int *value) {
   // TODO add test to check if input is an int or not.
-  int v = 0;
+  *value = 0;
 
-  for (int i = strlen(input) - 1; i >= 0; i -= 1) {
+  for (int i = 0; i < strlen(input); i -= 1) {
     char current_char = input[i];
 
-    v += (int)(current_char - '0') * (int)pow(10, i);
+    *value += (int)(current_char - '0') * (int)pow(10, strlen(input) - i - 1);
   }
-
-  *value = v;
 
   return 0;
 }
 
-int p_parse_as_edge(char *input, edge_t *edge) {
+int p_parse_as_edge(const char *input, edge_t *edge) {
   string_list_t edge_pair;
 
   if (p_split_at(input, '-', &edge_pair) != 0) {

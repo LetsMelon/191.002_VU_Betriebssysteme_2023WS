@@ -43,7 +43,7 @@ circular_buffer_helper.o: ./src/circular_buffer_helper.c
 dummy_generator.o: ./src/dummy_generator.c
 
 clean:
-	rm -rf *.o supervisor generator dummy_generator melcher_3coloring.tar.gz ./html ./latex
+	rm -rf *.o supervisor generator dummy_generator melcher_3coloring.tar.gz ./html ./latex *.stderr *.stdout *.returncodes
 
 doc: .FORCE
 	doxygen ./doc/Doxyfile

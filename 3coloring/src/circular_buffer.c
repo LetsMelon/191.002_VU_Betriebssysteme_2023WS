@@ -1,3 +1,11 @@
+/**
+ * @file circular_buffer.c
+ * @author Domenic Melcher <e12220857@student.tuwien.ac.at>
+ * @date 12.11.2023
+ *
+ * @brief Implementation file for circular buffer functions.
+ */
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -12,7 +20,9 @@ int cb_init(circular_buffer_t *buffer) {
   return 0;
 }
 
-void cb_free(circular_buffer_t *buffer) {}
+void cb_free(circular_buffer_t *buffer) {
+  // Implementation for freeing the circular buffer can be added here if needed
+}
 
 bool cb_is_full(circular_buffer_t *buffer) {
   return BUFFER_SIZE == buffer->count;
