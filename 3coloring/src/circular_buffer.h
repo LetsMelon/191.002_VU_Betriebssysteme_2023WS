@@ -13,6 +13,10 @@
 
 #include "edge.h"
 
+/**
+ * @struct solution_t
+ * @brief Structure representing a solution of deleted edges in a graph
+ */
 typedef struct {
   int len;                 /**< Count of deleted edges */
   edge_t edges[MAX_EDGES]; /**< Array of deleted edges */
@@ -25,6 +29,10 @@ typedef struct {
 #define BUFFER_SIZE                                                            \
   (int)(((1024 * 4) - 2 * sizeof(uint64_t)) / sizeof(solution_t))
 
+/**
+ * @struct circular_buffer_t
+ * @brief Structure representing a circular buffer
+ */
 typedef struct {
   solution_t data[BUFFER_SIZE]; /**< Array to store buffer data */
   uint64_t head;                /**< Index for writing data */
