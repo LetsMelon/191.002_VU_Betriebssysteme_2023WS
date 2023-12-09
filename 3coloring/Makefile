@@ -29,14 +29,14 @@ generator: generator.o $(OBJECTS)
 %.o: ./src/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-supervisor.o: ./src/supervisor.c
-generator.o: ./src/generator.c
-parser.o: ./src/parser.c
-edge.o: ./src/edge.c
-matrix.o: ./src/matrix.c
-circular_buffer.o: ./src/circular_buffer.c
-shared_memory.o: ./src/shared_memory.c
-circular_buffer_helper.o: ./src/circular_buffer_helper.c
+supervisor.o: ./supervisor.c
+generator.o: ./generator.c
+parser.o: ./parser.c
+edge.o: ./edge.c
+matrix.o: ./matrix.c
+circular_buffer.o: ./circular_buffer.c
+shared_memory.o: ./shared_memory.c
+circular_buffer_helper.o: ./circular_buffer_helper.c
 
 clean:
 	rm -rf *.o supervisor generator dummy_generator melcher_3coloring.tar.gz ./html ./latex *.stderr *.stdout *.returncodes
