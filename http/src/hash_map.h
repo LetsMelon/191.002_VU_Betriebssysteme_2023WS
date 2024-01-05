@@ -10,6 +10,7 @@ typedef enum {
 typedef struct {
   char *name;
   char *content;
+  long last_modified;
 } hash_map_entry_t;
 
 typedef struct {
@@ -17,7 +18,8 @@ typedef struct {
   hash_map_entry_t *data;
 } hash_map_entry_internal_t;
 
-int hm_entry_init(char *name, char *content, hash_map_entry_t *item);
+int hm_entry_init(char *name, char *content, long last_modified,
+                  hash_map_entry_t *item);
 
 void hm_entry_free(hash_map_entry_t *item);
 

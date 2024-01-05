@@ -5,7 +5,10 @@
 
 #include "hash_map.h"
 
-int hm_entry_init(char *name, char *content, hash_map_entry_t *item) {
+int hm_entry_init(char *name, char *content, long last_modified,
+                  hash_map_entry_t *item) {
+  item->last_modified = last_modified;
+
   item->name = strdup(name);
   if (item->name == NULL) {
     return -1;
@@ -69,7 +72,8 @@ int hm_map_add(hash_map_t *map, hash_map_entry_t item) {
     return -1;
   }
 
-  if (hm_entry_init(item.name, item.content, new_entry) != 0) {
+  if (hm_entry_init(item.name, item.content, item.last_modified, new_entry) !=
+      0) {
     free(new_entry);
 
     return -1;
@@ -82,8 +86,6 @@ int hm_map_add(hash_map_t *map, hash_map_entry_t item) {
     printf("index = %d, iterations = %d\n", index, iterations);
 
     if (map->items[index].type != E_DATA) {
-      printf("Add\n");
-
       map->items[index].data = new_entry;
       map->items[index].type = E_DATA;
       map->count += 1;
@@ -92,8 +94,6 @@ int hm_map_add(hash_map_t *map, hash_map_entry_t item) {
     } else {
 
       if (strcmp(map->items[index].data->name, new_entry->name) == 0) {
-        printf("Update\n");
-
         map->items[index].data->content = new_entry->content;
         free(new_entry->name);
 
@@ -123,6 +123,8 @@ static int hm_map_get_data_internal(hash_map_t *map, const char *key,
 
     int index = hm_hash_function(key, iterations);
 
+    printf("index = %d, iterations = %d\n", index, iterations);
+
     if (map->items[index].type == E_FREE) {
       return -1;
     } else if (map->items[index].type == E_DATA) {
@@ -141,11 +143,14 @@ static int hm_map_get_data_internal(hash_map_t *map, const char *key,
 }
 
 int hm_map_get(hash_map_t *map, const char *key, hash_map_entry_t *item) {
+  printf("GET\n");
+
   hash_map_entry_internal_t internal_item;
   if (hm_map_get_data_internal(map, key, &internal_item) < 0) {
     return -1;
   }
 
+  item->last_modified = internal_item.data->last_modified;
   item->name = NULL;
   item->content = NULL;
 
