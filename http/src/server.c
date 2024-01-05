@@ -1,3 +1,4 @@
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -59,11 +60,62 @@ int arguments_parse(int argc, char **argv, arguments_t *args) {
     return -1;
   }
 
-  args->doc_root = argv[optind];
+  args->doc_root = malloc(sizeof(char) * PATH_MAX);
+  if (args->doc_root == NULL) {
+    fprintf(stderr, "Error in alloc\n");
+    return -1;
+  }
+
+  if (realpath(argv[optind], args->doc_root) == NULL) {
+    free(args->doc_root);
+    return -1;
+  }
 
   return 0;
 }
-void arguments_free(arguments_t *args) {}
+
+void arguments_free(arguments_t *args) {
+  free(args->doc_root);
+  args->doc_root = NULL;
+}
+
+int path_combine(const char *p1, const char *p2, char **out) {
+  int p1_len = strlen(p1);
+  int p2_len = strlen(p2);
+
+  int char_to_add;
+  if (p1[p1_len - 1] == '/' || p2[0] == '/') {
+    char_to_add = 0;
+  } else {
+    char_to_add = 1;
+  }
+
+  int n = p1_len + p2_len + char_to_add + 1;
+  char *tmp_out = malloc(sizeof(char) * n);
+  if (tmp_out == NULL) {
+    return -1;
+  }
+  tmp_out[n - 1] = '\0';
+
+  if (strcpy(tmp_out, p1) == NULL) {
+    free(tmp_out);
+    return -1;
+  }
+
+  int write_head = p1_len;
+  if (char_to_add == 1) {
+    tmp_out[write_head] = '/';
+    write_head += 1;
+  }
+
+  if (strcpy(tmp_out + sizeof(char) * write_head, p2) == NULL) {
+    free(tmp_out);
+    return -1;
+  }
+
+  *out = tmp_out;
+  return 0;
+}
 
 int main(int argc, char **argv) {
   arguments_t args;
@@ -71,13 +123,10 @@ int main(int argc, char **argv) {
     printf("%s", USAGE);
 
     return EXIT_FAILURE;
-  };
+  }
 
   printf("args: port = %d, index = '%s', doc_root = '%s'\n", args.port,
          args.index, args.doc_root);
-
-  hash_map_t hash_map;
-  hm_map_init(&hash_map);
 
   header_t headers = {.name = "Host", .value = "www.myhost.at"};
 
@@ -87,99 +136,11 @@ int main(int argc, char **argv) {
                        .headers = &headers,
                        .headers_count = 1};
 
-  // request_free(&request);
+  char *tmp = NULL;
+  path_combine(args.doc_root, request.file, &tmp);
+  printf("out: %s\n", tmp);
+  free(tmp);
 
-  hash_map_entry_t item;
-  if (hm_map_get(&hash_map, request.file, &item) < 0) {
-    // TODO read_file
-    printf("READ FILE FROM FS - '%s'\n", request.file);
-
-    char *path = "/Users/domenic/Documents/Programming/"
-                 "191.002_VU_Betriebssysteme_2023WS/http/root/index.html";
-
-    FILE *file = fopen(path, "r");
-    if (file == NULL) {
-      // TODO send error
-      return EXIT_FAILURE;
-    }
-
-    struct stat file_info;
-    stat(path, &file_info);
-
-    // Format last modified time according to HTTP date format
-    // char lastModifiedTime[64];
-    // strftime(lastModifiedTime, sizeof(lastModifiedTime),
-    //          "%a, %d %b %Y %H:%M:%S GMT", gmtime(&file_info.st_mtime));
-    //
-    // printf("stat: st_size = %lld, lastModifiedTime = '%s'\n",
-    // file_info.st_size,
-    //        lastModifiedTime);
-
-    long file_size = file_info.st_size;
-    char *file_content = malloc(file_size + 1);
-    if (file_content == NULL) {
-      // TODO send error
-      fclose(file);
-
-      return EXIT_FAILURE;
-    }
-
-    fread(file_content, 1, file_size, file);
-    file_content[file_size] = '\0';
-
-    fclose(file);
-
-    hash_map_entry_t tmp_item;
-    if (hm_entry_init(request.file, file_content, (long)file_info.st_mtime,
-                      &tmp_item) < 0) {
-      free(file_content);
-      hm_map_free(&hash_map);
-      arguments_free(&args);
-
-      return EXIT_FAILURE;
-    }
-    free(file_content);
-
-    if (hm_map_add(&hash_map, tmp_item) < 0) {
-      hm_entry_free(&tmp_item);
-      hm_map_free(&hash_map);
-      arguments_free(&args);
-
-      return EXIT_FAILURE;
-    }
-    if (hm_map_get(&hash_map, request.file, &item) < 0) {
-      hm_map_free(&hash_map);
-      arguments_free(&args);
-
-      return EXIT_FAILURE;
-    }
-
-  } else {
-    printf("ALREADY CACHED\n");
-    // item has everything
-  }
-
-  printf("lm = %s\n", ctime(&item.last_modified));
-
-  hm_entry_free(&item);
-
-  /*
-  {
-    hash_map_entry_t item;
-    hm_entry_init("Domenic Melcher", "<h1>title</h1>", &item);
-    hm_map_add(&hash_map, item);
-  }
-
-  {
-    hash_map_entry_t item;
-    printf("get: %d, ", hm_map_get(&hash_map, "Domenic Melcher", &item));
-    printf("name = '%s', content = '%s'\n", item.name, item.content);
-    hm_entry_free(&item);
-  }
-
-  printf("remove: %d\n", hm_map_remove(&hash_map, "Domenic Melcher"));
-  */
-  hm_map_free(&hash_map);
   arguments_free(&args);
 
   return EXIT_SUCCESS;
