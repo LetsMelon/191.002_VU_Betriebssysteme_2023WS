@@ -91,44 +91,6 @@ void arguments_free(arguments_t *args) {
   args->doc_root = NULL;
 }
 
-int path_combine(const char *p1, const char *p2, char **out) {
-  int p1_len = strlen(p1);
-  int p2_len = strlen(p2);
-
-  int char_to_add;
-  if (p1[p1_len - 1] == '/' || p2[0] == '/') {
-    char_to_add = 0;
-  } else {
-    char_to_add = 1;
-  }
-
-  int n = p1_len + p2_len + char_to_add + 1;
-  char *tmp_out = malloc(sizeof(char) * n);
-  if (tmp_out == NULL) {
-    return -1;
-  }
-  tmp_out[n - 1] = '\0';
-
-  if (strcpy(tmp_out, p1) == NULL) {
-    free(tmp_out);
-    return -1;
-  }
-
-  int write_head = p1_len;
-  if (char_to_add == 1) {
-    tmp_out[write_head] = '/';
-    write_head += 1;
-  }
-
-  if (strcpy(tmp_out + sizeof(char) * write_head, p2) == NULL) {
-    free(tmp_out);
-    return -1;
-  }
-
-  *out = tmp_out;
-  return 0;
-}
-
 int main(int argc, char **argv) {
   arguments_t args;
   if (arguments_parse(argc, argv, &args) != 0) {
@@ -291,7 +253,7 @@ int main(int argc, char **argv) {
       respond_error(connection, STATUS_NOT_IMPLEMENTED);
     } else if (request.file_path != NULL) {
       char *path = NULL;
-      path_combine(args.doc_root, request.file_path, &path);
+      combine_file_paths(args.doc_root, request.file_path, &path);
 
       if (path != NULL && file_at_path_exists(path) == false) {
         respond_error(connection, STATUS_NOT_FOUND);
