@@ -1,7 +1,11 @@
 #include <limits.h>
+#include <netdb.h>
+#include <signal.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
@@ -16,12 +20,21 @@ static char *USAGE =
     "1280 -i index.html ~/Documents/my_website/\n";
 
 typedef struct {
-  int port;
-  char *index, *doc_root;
+  char *port, *index, *doc_root;
 } arguments_t;
 
+volatile bool in_shutdown = true;
+
+void handle_exit_loop(int signal) { in_shutdown = false; }
+
+void handle_shutdown(int signal) {
+  handle_exit_loop(signal);
+
+  exit(EXIT_SUCCESS);
+}
+
 int arguments_parse(int argc, char **argv, arguments_t *args) {
-  args->port = 80;
+  args->port = "80";
   args->index = "index.html";
 
   int opt, encountered_p = 0, encountered_i = 0;
@@ -32,9 +45,7 @@ int arguments_parse(int argc, char **argv, arguments_t *args) {
         return -1;
       }
 
-      if (p_parse_as_int(optarg, &args->port) < 0) {
-        return -1;
-      }
+      args->port = optarg;
 
       encountered_p += 1;
 
@@ -117,6 +128,17 @@ int path_combine(const char *p1, const char *p2, char **out) {
   return 0;
 }
 
+long file_size(FILE *file) {
+  fseek(file, 0, SEEK_END);
+  long size = ftell(file);
+
+  fseek(file, 0, SEEK_SET);
+
+  return size;
+}
+
+static bool file_exists(const char *path) { return access(path, F_OK) != -1; }
+
 int main(int argc, char **argv) {
   arguments_t args;
   if (arguments_parse(argc, argv, &args) != 0) {
@@ -125,22 +147,197 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  printf("args: port = %d, index = '%s', doc_root = '%s'\n", args.port,
-         args.index, args.doc_root);
+  fprintf(stderr, "args: port = %s, index = '%s', doc_root = '%s'\n", args.port,
+          args.index, args.doc_root);
 
-  header_t headers = {.name = "Host", .value = "www.myhost.at"};
+  struct addrinfo *ai = NULL;
+  if (get_addrinfo(NULL, args.port, &ai) < 0) {
+    arguments_free(&args);
+    return EXIT_FAILURE;
+  }
 
-  request_t request = {.method = REQUEST_GET,
-                       .version = HTTP_1_1,
-                       .file = "/index.html",
-                       .headers = &headers,
-                       .headers_count = 1};
+  int sockfd;
+  if (create_socket(ai, &sockfd) < 0) {
+    freeaddrinfo(ai);
+    arguments_free(&args);
 
-  char *tmp = NULL;
-  path_combine(args.doc_root, request.file, &tmp);
-  printf("out: %s\n", tmp);
-  free(tmp);
+    return EXIT_FAILURE;
+  }
 
+  if (bind(sockfd, ai->ai_addr, ai->ai_addrlen) < 0) {
+    close(sockfd);
+    freeaddrinfo(ai);
+    arguments_free(&args);
+
+    return EXIT_FAILURE;
+  }
+
+  if (listen(sockfd, 1) < 0) {
+    close(sockfd);
+    freeaddrinfo(ai);
+    arguments_free(&args);
+
+    return EXIT_FAILURE;
+  }
+
+  while (in_shutdown) {
+    signal(SIGINT, handle_shutdown);
+    signal(SIGTERM, handle_shutdown);
+
+    int connection_fd;
+    if ((connection_fd = accept(sockfd, ai->ai_addr, &ai->ai_addrlen)) < 0) {
+      close(sockfd);
+      freeaddrinfo(ai);
+      arguments_free(&args);
+
+      return EXIT_FAILURE;
+    }
+    fprintf(stderr, "Have connection!\n");
+
+    signal(SIGINT, handle_exit_loop);
+    signal(SIGTERM, handle_exit_loop);
+
+    FILE *connection = fdopen(connection_fd, "r+");
+    if (connection == NULL) {
+      in_shutdown = false;
+
+      break;
+    }
+
+    request_t request;
+    int buffer_size = 1024;
+    char h_buf[buffer_size];
+    bool is_first_request_line = true;
+
+    while (fgets(h_buf, buffer_size, connection) != NULL) {
+#ifdef DDEBUG
+      fprintf(stderr, "DEBUG: '");
+      for (int i = 0; i < buffer_size; i += 1) {
+        char c = h_buf[i];
+
+        switch (c) {
+        case '\0':
+          i = buffer_size + 1;
+          break;
+        case '\n':
+          fprintf(stderr, "\\n");
+          break;
+        case '\t':
+          fprintf(stderr, "\\t");
+          break;
+        case '\r':
+          fprintf(stderr, "\\r");
+          break;
+        case '\v':
+          fprintf(stderr, "\\v");
+          break;
+        case '\f':
+          fprintf(stderr, "\\f");
+          break;
+        case '\a':
+          fprintf(stderr, "\\a");
+          break;
+        case '\\':
+          fprintf(stderr, "\\\\");
+          break;
+        case '\"':
+          fprintf(stderr, "\\\"");
+          break;
+        default:
+          fprintf(stderr, "%c", c);
+          break;
+        }
+      }
+      fprintf(stderr, "'\n");
+#endif
+
+      if (is_first_request_line == true) {
+        string_list_t items;
+        if (p_split_at(h_buf, ' ', &items) < 0) {
+
+          request.method = -1;
+          request.version = -1;
+        }
+
+        if (items.num < 3) {
+          request.method = -1;
+          request.version = -1;
+        }
+
+        if (strcmp(items.values[0], "GET") == 0) {
+          request.method = REQUEST_GET;
+        } else {
+          // ? some method that isn't supported by this http server
+          request.method = -1;
+        }
+
+        if (strlen(items.values[1]) == 1 && items.values[1][0] == '/') {
+          request.file_path = strdup(args.index);
+        } else {
+          request.file_path = strdup(items.values[1]);
+        }
+
+        if (strcmp(items.values[2], "HTTP/1.1\r\n") == 0) {
+          request.version = HTTP_1_1;
+        } else {
+          // ? some version that isn't supported by this http server
+          request.version = -1;
+        }
+
+        sl_free(&items);
+
+        is_first_request_line = false;
+      }
+
+      if (h_buf[0] == '\r' && h_buf[1] == '\n') {
+        break;
+      }
+    }
+
+    if (request.version != HTTP_1_1) {
+      request_free(&request);
+
+      respond_error(connection, STATUS_BAD_REQUEST);
+    } else if (request.method != REQUEST_GET) {
+      request_free(&request);
+
+      respond_error(connection, STATUS_NOT_IMPLEMENTED);
+    } else if (request.file_path != NULL) {
+      char *path = NULL;
+      path_combine(args.doc_root, request.file_path, &path);
+
+      if (path != NULL && file_exists(path) == false) {
+        respond_error(connection, STATUS_NOT_FOUND);
+      } else if (path != NULL) {
+        FILE *content = fopen(path, "r");
+        long body_size = file_size(content);
+
+        response_t response = {.version = HTTP_1_1,
+                               .status_code = STATUS_OK,
+                               .body = content,
+                               .body_len = body_size};
+
+        respond(connection, response);
+        fclose(content);
+      }
+
+      if (path != NULL) {
+        free(path);
+      }
+    }
+
+    if (request.file_path != NULL) {
+      request_free(&request);
+    }
+
+    fflush(connection);
+    fclose(connection);
+
+    fprintf(stderr, "Finish!\n");
+  }
+
+  close(sockfd);
+  freeaddrinfo(ai);
   arguments_free(&args);
 
   return EXIT_SUCCESS;
