@@ -15,7 +15,7 @@ else
 LDFLAGS = -lm
 endif
 
-OBJECTS = parser.o http.o hash_map.o
+OBJECTS = parser.o http.o hash_map.o file_helper.o
 
 .PHONY: all clean .FORCE build-container run-container check-memory-leaks package
 all: server client
@@ -37,6 +37,7 @@ client.o: ./src/client.c
 parser.o: ./src/parser.c
 http.o: ./src/http.c
 hash_map.o: ./src/hash_map.c
+file_helper.o: ./src/file_helper.c
 
 clean:
 	rm -rf *.o server client *.tar.gz ./html ./latex *.stderr *.stdout *.returncodes

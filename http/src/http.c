@@ -88,15 +88,16 @@ int respond(FILE *socket, response_t response) {
 
   char *status_text = status_to_text(&response.status_code);
 
-  char time_header_buffer[64];
-  if (time_as_rfc822(time_header_buffer, 64) < 0) {
-    return -1;
-  }
+  fprintf(socket, "HTTP/1.1 %d %s\r\n", (int)response.status_code, status_text);
 
-  fprintf(socket,
-          "HTTP/1.1 %d %s\r\n"
-          "Date: %s\r\n",
-          (int)response.status_code, status_text, time_header_buffer);
+  if (response.status_code == STATUS_OK) {
+    char time_header_buffer[64];
+    if (time_as_rfc822(time_header_buffer, 64) < 0) {
+      return -1;
+    }
+
+    fprintf(socket, "Date: %s\r\n", time_header_buffer);
+  }
 
   if (response.body != NULL) {
     fprintf(socket,

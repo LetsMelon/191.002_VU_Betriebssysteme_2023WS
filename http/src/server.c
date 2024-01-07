@@ -11,6 +11,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "file_helper.h"
 #include "hash_map.h"
 #include "http.h"
 #include "parser.h"
@@ -128,17 +129,6 @@ int path_combine(const char *p1, const char *p2, char **out) {
   return 0;
 }
 
-long file_size(FILE *file) {
-  fseek(file, 0, SEEK_END);
-  long size = ftell(file);
-
-  fseek(file, 0, SEEK_SET);
-
-  return size;
-}
-
-static bool file_exists(const char *path) { return access(path, F_OK) != -1; }
-
 int main(int argc, char **argv) {
   arguments_t args;
   if (arguments_parse(argc, argv, &args) != 0) {
@@ -147,8 +137,8 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  fprintf(stderr, "args: port = %s, index = '%s', doc_root = '%s'\n", args.port,
-          args.index, args.doc_root);
+  fprintf(stderr, "args: { port = %s, index = '%s', doc_root = '%s' }\n",
+          args.port, args.index, args.doc_root);
 
   struct addrinfo *ai = NULL;
   if (get_addrinfo(NULL, args.port, &ai) < 0) {
@@ -204,52 +194,60 @@ int main(int argc, char **argv) {
       break;
     }
 
-    request_t request;
-    int buffer_size = 1024;
+    request_t request = {.method = -1, .version = -1, .file_path = NULL};
+    int buffer_size = 512;
     char h_buf[buffer_size];
     bool is_first_request_line = true;
+    int read_lines = 0;
 
     while (fgets(h_buf, buffer_size, connection) != NULL) {
-#ifdef DDEBUG
-      fprintf(stderr, "DEBUG: '");
+      fprintf(stderr, "DEBUG %d: '", read_lines);
       for (int i = 0; i < buffer_size; i += 1) {
         char c = h_buf[i];
+
+        char *to_print;
 
         switch (c) {
         case '\0':
           i = buffer_size + 1;
+          to_print = "";
           break;
         case '\n':
-          fprintf(stderr, "\\n");
+          to_print = "\\n";
           break;
         case '\t':
-          fprintf(stderr, "\\t");
+          to_print = "\\t";
           break;
         case '\r':
-          fprintf(stderr, "\\r");
+          to_print = "\\r";
           break;
         case '\v':
-          fprintf(stderr, "\\v");
+          to_print = "\\v";
           break;
         case '\f':
-          fprintf(stderr, "\\f");
+          to_print = "\\f";
           break;
         case '\a':
-          fprintf(stderr, "\\a");
+          to_print = "\\a";
           break;
         case '\\':
-          fprintf(stderr, "\\\\");
+          to_print = "\\\\";
           break;
         case '\"':
-          fprintf(stderr, "\\\"");
+          to_print = "\\\"";
           break;
         default:
           fprintf(stderr, "%c", c);
+          to_print = NULL;
+
           break;
+        }
+
+        if (to_print != NULL) {
+          fprintf(stderr, "%s", to_print);
         }
       }
       fprintf(stderr, "'\n");
-#endif
 
       if (is_first_request_line == true) {
         string_list_t items;
@@ -259,29 +257,20 @@ int main(int argc, char **argv) {
           request.version = -1;
         }
 
-        if (items.num < 3) {
-          request.method = -1;
-          request.version = -1;
-        }
+        if (items.num > 2) {
+          if (strcmp(items.values[0], "GET") == 0) {
+            request.method = REQUEST_GET;
+          }
 
-        if (strcmp(items.values[0], "GET") == 0) {
-          request.method = REQUEST_GET;
-        } else {
-          // ? some method that isn't supported by this http server
-          request.method = -1;
-        }
+          if (strlen(items.values[1]) == 1 && items.values[1][0] == '/') {
+            request.file_path = strdup(args.index);
+          } else {
+            request.file_path = strdup(items.values[1]);
+          }
 
-        if (strlen(items.values[1]) == 1 && items.values[1][0] == '/') {
-          request.file_path = strdup(args.index);
-        } else {
-          request.file_path = strdup(items.values[1]);
-        }
-
-        if (strcmp(items.values[2], "HTTP/1.1\r\n") == 0) {
-          request.version = HTTP_1_1;
-        } else {
-          // ? some version that isn't supported by this http server
-          request.version = -1;
+          if (strcmp(items.values[2], "HTTP/1.1\r\n") == 0) {
+            request.version = HTTP_1_1;
+          }
         }
 
         sl_free(&items);
@@ -292,21 +281,19 @@ int main(int argc, char **argv) {
       if (h_buf[0] == '\r' && h_buf[1] == '\n') {
         break;
       }
+
+      read_lines += 1;
     }
 
     if (request.version != HTTP_1_1) {
-      request_free(&request);
-
       respond_error(connection, STATUS_BAD_REQUEST);
     } else if (request.method != REQUEST_GET) {
-      request_free(&request);
-
       respond_error(connection, STATUS_NOT_IMPLEMENTED);
     } else if (request.file_path != NULL) {
       char *path = NULL;
       path_combine(args.doc_root, request.file_path, &path);
 
-      if (path != NULL && file_exists(path) == false) {
+      if (path != NULL && file_at_path_exists(path) == false) {
         respond_error(connection, STATUS_NOT_FOUND);
       } else if (path != NULL) {
         FILE *content = fopen(path, "r");
