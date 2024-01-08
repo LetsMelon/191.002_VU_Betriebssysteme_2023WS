@@ -5,11 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <time.h>
-#include <unistd.h>
 
 #include "file_helper.h"
 #include "hash_map.h"
@@ -25,7 +20,7 @@ typedef struct {
   char *port, *file, *dir, *url;
 } arguments_t;
 
-int arguments_parse(int argc, char **argv, arguments_t *args) {
+static int arguments_parse(int argc, char **argv, arguments_t *args) {
   args->port = "80";
   args->file = NULL;
   args->dir = NULL;
@@ -230,12 +225,8 @@ int main(int argc, char **argv) {
   if (args.file != NULL) {
     output = fopen(filename, "w");
   } else if (args.dir != NULL) {
-    int dir_len = strlen(args.dir);
-    char *tmp_path = calloc(dir_len + strlen(filename), sizeof(char));
-
-    strcpy(tmp_path, args.dir);
-    tmp_path[dir_len] = '/';
-    strcpy(&tmp_path[dir_len + 1], &filename[2]);
+    char *tmp_path = NULL;
+    combine_file_paths(args.dir, "index.html", &tmp_path);
 
     output = fopen(tmp_path, "w");
 
