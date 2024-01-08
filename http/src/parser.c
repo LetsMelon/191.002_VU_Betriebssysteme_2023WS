@@ -96,33 +96,28 @@ int p_split_at(const char *input, char pattern, string_list_t *list) {
   int last_split = 0;
   for (int i = 0; i < input_len; i += 1) {
     if (input[i] == pattern) {
-      if (last_split == i) {
-        last_split = i + 1;
-        continue;
-      }
+      if (last_split != i) {
+        int copy_len = i - last_split;
+        strncpy(tmp_buffer, input + last_split, copy_len);
+        tmp_buffer[copy_len] = '\0';
 
-      int copy_len = i - last_split;
-      assert((copy_len + 1) <= sizeof(tmp_buffer));
-      strncpy(tmp_buffer, input + sizeof(char) * last_split, copy_len);
-      tmp_buffer[copy_len] = '\0';
-      if (sl_add(list, tmp_buffer) != 0) {
-        return -1;
+        if (sl_add(list, tmp_buffer) != 0) {
+          return -1;
+        }
       }
 
       last_split = i + 1;
     }
   }
 
-  int copy_len = input_len - last_split;
-  if (copy_len < 1) {
-    return 0;
-  }
+  if (last_split != input_len) {
+    int copy_len = input_len - last_split;
+    strncpy(tmp_buffer, input + last_split, copy_len);
+    tmp_buffer[copy_len] = '\0';
 
-  assert((copy_len + 1) < sizeof(tmp_buffer));
-  strncpy(tmp_buffer, input + sizeof(char) * last_split, copy_len);
-  tmp_buffer[copy_len] = '\0';
-  if (sl_add(list, tmp_buffer) != 0) {
-    return -1;
+    if (sl_add(list, tmp_buffer) != 0) {
+      return -1;
+    }
   }
 
   return 0;
