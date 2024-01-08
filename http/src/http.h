@@ -106,7 +106,7 @@ typedef struct {
   request_method_e method;
   http_version_e version;
 
-  char *file_path;
+  char *file_path, *hostname;
 } request_t;
 
 void request_free(request_t *request);
@@ -128,5 +128,11 @@ int create_socket(const struct addrinfo *info, int *sockfd);
 int respond(FILE *socket, response_t response);
 
 int respond_error(FILE *socket, status_code_e status);
+
+int request(FILE *socket, request_t request);
+
+status_code_e status_code_from_int(int value);
+
+const char *status_to_text(status_code_e *status);
 
 #endif /* _H */

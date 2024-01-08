@@ -7,7 +7,15 @@
 #include <sys/socket.h>
 #include <time.h>
 
-void request_free(request_t *request) { free(request->file_path); }
+void request_free(request_t *request) {
+  if (request->file_path != NULL) {
+    free(request->file_path);
+  }
+
+  if (request->hostname != NULL) {
+    free(request->hostname);
+  }
+}
 
 void response_free(response_t *response) {}
 
@@ -40,7 +48,7 @@ int create_socket(const struct addrinfo *info, int *sockfd) {
   return 0;
 }
 
-static char *status_to_text(status_code_e *status) {
+const char *status_to_text(status_code_e *status) {
   switch (*status) {
   case STATUS_OK:
     return "OK";
@@ -55,8 +63,8 @@ static char *status_to_text(status_code_e *status) {
     return "Not Found";
 
   default:
-    fprintf(stderr, "DEBUG: Status code not implemented in switch: %d",
-            (int)*status);
+    // fprintf(stderr, "DEBUG: Status code not implemented in switch: %d",
+    //         (int)*status);
 
     *status = STATUS_INTERNAL_SERVER_ERROR;
 
@@ -86,7 +94,7 @@ int respond(FILE *socket, response_t response) {
     return code < 0 ? code : 1;
   }
 
-  char *status_text = status_to_text(&response.status_code);
+  const char *status_text = status_to_text(&response.status_code);
 
   fprintf(socket, "HTTP/1.1 %d %s\r\n", (int)response.status_code, status_text);
 
@@ -138,4 +146,46 @@ int respond_error(FILE *socket, status_code_e status) {
       .version = HTTP_1_1, .status_code = status, .body = NULL, .body_len = 0};
 
   return respond(socket, response);
+}
+
+int request(FILE *socket, request_t request) {
+  if (request.version != HTTP_1_1 || request.method != REQUEST_GET) {
+    request_free(&request);
+    return -1;
+  }
+
+  fprintf(socket,
+          "GET %s HTTP/1.1\r\n"
+          "Host: %s\r\n"
+          "Connection: close\r\n"
+          "\r\n",
+          request.file_path, request.hostname);
+
+  fflush(socket);
+  request_free(&request);
+
+  return 0;
+}
+
+status_code_e status_code_from_int(int value) {
+  if (value == 100 || value == 101 || value == 102 || value == 103 ||
+      value == 200 || value == 201 || value == 202 || value == 203 ||
+      value == 204 || value == 205 || value == 206 || value == 207 ||
+      value == 208 || value == 226 || value == 300 || value == 301 ||
+      value == 302 || value == 303 || value == 304 || value == 305 ||
+      value == 306 || value == 307 || value == 308 || value == 400 ||
+      value == 401 || value == 402 || value == 403 || value == 404 ||
+      value == 405 || value == 406 || value == 407 || value == 408 ||
+      value == 409 || value == 410 || value == 411 || value == 412 ||
+      value == 413 || value == 414 || value == 415 || value == 416 ||
+      value == 417 || value == 421 || value == 422 || value == 423 ||
+      value == 424 || value == 425 || value == 426 || value == 428 ||
+      value == 429 || value == 431 || value == 451 || value == 500 ||
+      value == 501 || value == 502 || value == 503 || value == 504 ||
+      value == 505 || value == 506 || value == 507 || value == 508 ||
+      value == 509 || value == 510 || value == 511) {
+    return (status_code_e)value;
+  } else {
+    return -1;
+  }
 }

@@ -156,7 +156,8 @@ int main(int argc, char **argv) {
       break;
     }
 
-    request_t request = {.method = -1, .version = -1, .file_path = NULL};
+    request_t request = {
+        .method = -1, .version = -1, .file_path = NULL, .hostname = NULL};
     int buffer_size = 512;
     char h_buf[buffer_size];
     bool is_first_request_line = true;
