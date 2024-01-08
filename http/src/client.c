@@ -109,6 +109,9 @@ int main(int argc, char **argv) {
       for (int i = filepath_start; i < filepath_stop; i += 1) {
         if (args.url[i] == '/') {
           filename_start = i;
+        } else if (args.url[i] == '?') {
+          filename_stop = i;
+          break;
         }
       }
 
@@ -223,10 +226,14 @@ int main(int argc, char **argv) {
 
   FILE *output = NULL;
   if (args.file != NULL) {
+    fprintf(stderr, "out file: '%s'\n", filename);
+
     output = fopen(filename, "w");
   } else if (args.dir != NULL) {
     char *tmp_path = NULL;
-    combine_file_paths(args.dir, "index.html", &tmp_path);
+    combine_file_paths(args.dir, filename, &tmp_path);
+
+    fprintf(stderr, "out dir: '%s'\n", tmp_path);
 
     output = fopen(tmp_path, "w");
 
