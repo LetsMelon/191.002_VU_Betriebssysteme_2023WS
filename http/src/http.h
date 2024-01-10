@@ -1,7 +1,7 @@
 /**
  * @file parser.h
  * @author Domenic Melcher <e12220857@student.tuwien.ac.at>
- * @date 12.11.2023
+ * @date 09.01.2024
  *
  * @brief Provides utility functions for parsing float complex values
  */
@@ -12,7 +12,6 @@
 #include <netdb.h>
 #include <stdio.h>
 
-// https://de.wikipedia.org/wiki/Hypertext_Transfer_Protocol#Geschichte
 typedef enum {
   REQUEST_GET = 0,
   REQUEST_POST,

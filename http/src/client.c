@@ -7,9 +7,22 @@
 #include <string.h>
 
 #include "file_helper.h"
-#include "hash_map.h"
 #include "http.h"
 #include "parser.h"
+
+#define DEBUG_PRINT(value)                                                     \
+  do {                                                                         \
+    fprintf(stderr, "[%s:%d] %s = ", __FILE__, __LINE__, #value);              \
+    debug_print_value(value);                                                  \
+    fprintf(stderr, "\n");                                                     \
+  } while (0)
+
+#define debug_print_value(value)                                               \
+  _Generic((value),                                                            \
+      int: fprintf(stderr, "%d", value),                                       \
+      double: fprintf(stderr, "%lf", value),                                   \
+      char *: fprintf(stderr, "'%s'", value),                                  \
+      default: fprintf(stderr, "Unknown Type"))
 
 static char *USAGE = "SYNOPSIS\n"
                      "\tclient [-p PORT] [ -o FILE | -d DIR ] URL\n"
@@ -72,31 +85,16 @@ static bool str_starts_with(const char *input, const char *search_pattern) {
   return memcmp(input, search_pattern, strlen(search_pattern)) == 0;
 }
 
-int main(int argc, char **argv) {
-  arguments_t args;
-  if (arguments_parse(argc, argv, &args) != 0) {
-    printf("%s", USAGE);
-
-    return EXIT_FAILURE;
-  }
-
-  if (str_starts_with(args.url, "http://") == false) {
-    printf("%s", USAGE);
-
-    return EXIT_FAILURE;
-  }
-
-  fprintf(stderr, "args: { port = %s, file = '%s', dir = '%s', url = '%s' }\n",
-          args.port, args.file == NULL ? "" : args.file,
-          args.dir == NULL ? "" : args.dir, args.url);
-
+static int parse_hostname_filepath_filename(const arguments_t *args,
+                                            char **hostname, char **filepath,
+                                            char **filename) {
   int hostname_start = strlen("http://"), hostname_stop = hostname_start;
-  int filepath_start = hostname_stop, filepath_stop = strlen(args.url);
-  int filename_start = hostname_stop, filename_stop = strlen(args.url);
+  int filepath_start = hostname_stop, filepath_stop = strlen(args->url);
+  int filename_start = hostname_stop, filename_stop = strlen(args->url);
 
   bool encountered_hostname = false;
-  for (int i = hostname_start; i < strlen(args.url); i += 1) {
-    char c = args.url[i];
+  for (int i = hostname_start; i < strlen(args->url); i += 1) {
+    char c = args->url[i];
 
     if (c == ';' || c == '/' || c == '?' || c == ':' || c == '@' || c == '=' ||
         c == '&') {
@@ -107,9 +105,11 @@ int main(int argc, char **argv) {
       filename_start = i;
 
       for (int i = filepath_start; i < filepath_stop; i += 1) {
-        if (args.url[i] == '/') {
+        c = args->url[i];
+
+        if (c == '/') {
           filename_start = i;
-        } else if (args.url[i] == '?') {
+        } else if (c == '?') {
           filename_stop = i;
           break;
         }
@@ -127,11 +127,74 @@ int main(int argc, char **argv) {
   int filepath_len = filepath_stop - filepath_start;
   int filename_len = filename_stop - filename_start;
 
-  char *hostname = calloc(hostname_len + 1, sizeof(char));
-  char *filepath = calloc(filepath_len + 1, sizeof(char));
-  char *filename = calloc(filename_len + 1, sizeof(char));
+  *hostname = calloc(hostname_len + 1, sizeof(char));
+  *filepath = calloc(filepath_len + 1, sizeof(char));
+  *filename = calloc(filename_len + 1, sizeof(char));
 
   if (hostname == NULL || filepath == NULL || filename == NULL) {
+    return -1;
+  }
+
+  stpncpy(*hostname, &args->url[hostname_start], hostname_len);
+  stpncpy(*filepath, &args->url[filepath_start], filepath_len);
+
+  if (args->file == NULL) {
+    stpncpy(*filename, &args->url[filename_start], filename_len);
+
+    if (filename_len == 1) {
+      free(*filename);
+
+      const char *default_filename = "./index.html";
+      *filename = strdup(default_filename);
+      filename_len = strlen(default_filename);
+
+      if (*filename == NULL) {
+        return -1;
+      }
+    }
+
+    if ((*filename)[0] == '/') {
+      char *tmp_filename = calloc(filename_len + 2, sizeof(char));
+      tmp_filename[0] = '.';
+      strcpy(&tmp_filename[1], *filename);
+      free(*filename);
+      *filename = tmp_filename;
+    }
+  } else {
+    *filename = strdup(args->file);
+
+    if (filename == NULL) {
+      free(hostname);
+      free(filepath);
+
+      return EXIT_FAILURE;
+    }
+  }
+
+  return 0;
+}
+
+int main(int argc, char **argv) {
+  arguments_t args;
+  if (arguments_parse(argc, argv, &args) != 0) {
+    printf("%s", USAGE);
+
+    return EXIT_FAILURE;
+  }
+
+  if (str_starts_with(args.url, "http://") == false) {
+    printf("%s", USAGE);
+
+    return EXIT_FAILURE;
+  }
+
+  fprintf(stderr, "args: { port = %s, file = '%s', dir = '%s', url = '%s' }\n",
+          args.port, args.file == NULL ? "NULL" : args.file,
+          args.dir == NULL ? "NULL" : args.dir, args.url);
+
+  char *hostname, *filepath, *filename;
+  if (parse_hostname_filepath_filename(&args, &hostname, &filepath, &filename) <
+      0) {
     if (hostname != NULL) {
       free(hostname);
     }
@@ -145,42 +208,6 @@ int main(int argc, char **argv) {
     }
 
     return EXIT_FAILURE;
-  }
-
-  stpncpy(hostname, &args.url[hostname_start], hostname_len);
-  stpncpy(filepath, &args.url[filepath_start], filepath_len);
-  if (args.file == NULL) {
-    stpncpy(filename, &args.url[filename_start], filename_len);
-
-    if (filename_len == 1) {
-      free(filename);
-
-      filename = strdup("/index.html");
-
-      if (filename == NULL) {
-        free(hostname);
-        free(filepath);
-
-        return EXIT_FAILURE;
-      }
-    }
-
-    if (filename[0] == '/') {
-      char *tmp_filename = calloc(filename_len + 2, sizeof(char));
-      tmp_filename[0] = '.';
-      strcpy(&tmp_filename[1], filename);
-      free(filename);
-      filename = tmp_filename;
-    }
-  } else {
-    filename = strdup(args.file);
-
-    if (filename == NULL) {
-      free(hostname);
-      free(filepath);
-
-      return EXIT_FAILURE;
-    }
   }
 
   fprintf(stderr, "HOSTNAME: '%s'\n", hostname);
@@ -199,15 +226,35 @@ int main(int argc, char **argv) {
 
   int sockfd;
   if (create_socket(ai, &sockfd) < 0) {
+    free(filepath);
+    free(hostname);
+    free(filename);
+
     freeaddrinfo(ai);
+    close(sockfd);
 
     return EXIT_FAILURE;
   }
 
   fprintf(stderr, "Connect\n");
-  connect(sockfd, ai->ai_addr, ai->ai_addrlen);
+  if (connect(sockfd, ai->ai_addr, ai->ai_addrlen) < 0) {
+    freeaddrinfo(ai);
+    free(filename);
+
+    return EXIT_FAILURE;
+  }
 
   FILE *connection = fdopen(sockfd, "r+");
+  if (connection == NULL) {
+    free(filepath);
+    free(hostname);
+    free(filename);
+
+    freeaddrinfo(ai);
+    close(sockfd);
+
+    return EXIT_FAILURE;
+  }
 
   freeaddrinfo(ai);
 
@@ -219,10 +266,6 @@ int main(int argc, char **argv) {
   request(connection, tmp_request);
 
   fprintf(stderr, "Response\n");
-  int buffer_size = 512;
-  char h_buf[buffer_size];
-  int read_lines = 0;
-  bool is_body = false;
 
   FILE *output = NULL;
   if (args.file != NULL) {
@@ -250,6 +293,11 @@ int main(int argc, char **argv) {
 
     return EXIT_FAILURE;
   }
+
+  int buffer_size = 2048;
+  char h_buf[buffer_size];
+  int read_lines = 0;
+  bool is_body = false;
 
   while (fgets(h_buf, buffer_size, connection) != NULL) {
     fprintf(stderr, "DEBUG %c %d:\t'", is_body == true ? 'b' : 'h', read_lines);
@@ -310,12 +358,14 @@ int main(int argc, char **argv) {
       }
 
       if (items.num < 3) {
+        fprintf(stderr, "Protocol error!");
+
         sl_free(&items);
 
         fclose(connection);
         close(sockfd);
 
-        return EXIT_FAILURE;
+        return 2;
       }
 
       long raw_status = strtol(items.values[1], NULL, 10);

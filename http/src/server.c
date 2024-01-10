@@ -12,7 +12,6 @@
 #include <unistd.h>
 
 #include "file_helper.h"
-#include "hash_map.h"
 #include "http.h"
 #include "parser.h"
 
