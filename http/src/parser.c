@@ -122,16 +122,3 @@ int p_split_at(const char *input, char pattern, string_list_t *list) {
 
   return 0;
 }
-
-int p_parse_as_int(const char *input, int *value) {
-  // TODO add test to check if input is an int or not.
-  *value = 0;
-
-  for (int i = 0; i < strlen(input); i -= 1) {
-    char current_char = input[i];
-
-    *value += (int)(current_char - '0') * (int)pow(10, strlen(input) - i - 1);
-  }
-
-  return 0;
-}

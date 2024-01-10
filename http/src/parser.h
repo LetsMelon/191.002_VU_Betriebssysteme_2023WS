@@ -43,6 +43,4 @@ void sl_print(string_list_t *list);
  */
 int p_split_at(const char *input, char pattern, string_list_t *list);
 
-int p_parse_as_int(const char *input, int *value);
-
 #endif /* _P */
