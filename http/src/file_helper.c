@@ -1,3 +1,11 @@
+/**
+ * @file file_helper.c
+ * @author Domenic Melcher <e12220857@student.tuwien.ac.at>
+ * @date 09.01.2024
+ *
+ * @brief Contains implementation for file helper functions.
+ */
+
 #include "file_helper.h"
 
 #include <stdbool.h>
@@ -22,17 +30,16 @@ int combine_file_paths(const char *path1, const char *path2, char **out) {
 
   int char_to_add;
   if (path1[p1_len - 1] == '/' || path2[0] == '/') {
-    char_to_add = 0;
+    char_to_add = 0; // No extra '/' needed
   } else {
-    char_to_add = 1;
+    char_to_add = 1; // Need to add '/'
   }
 
   int n = p1_len + p2_len + char_to_add + 1;
-  char *tmp_out = malloc(sizeof(char) * n);
+  char *tmp_out = calloc(n, sizeof(char));
   if (tmp_out == NULL) {
     return -1;
   }
-  tmp_out[n - 1] = '\0';
 
   if (strcpy(tmp_out, path1) == NULL) {
     free(tmp_out);
@@ -41,7 +48,7 @@ int combine_file_paths(const char *path1, const char *path2, char **out) {
 
   int write_head = p1_len;
   if (char_to_add == 1) {
-    tmp_out[write_head] = '/';
+    tmp_out[write_head] = '/'; // Add '/' between paths
     write_head += 1;
   }
 
