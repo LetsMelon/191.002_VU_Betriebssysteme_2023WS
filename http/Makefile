@@ -32,11 +32,11 @@ dummy_generator: dummy_generator.o $(OBJECTS)
 %.o: ./src/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-server.o: ./src/server.c
-client.o: ./src/client.c
-parser.o: ./src/parser.c
-http.o: ./src/http.c
-file_helper.o: ./src/file_helper.c
+server.o: ./server.c
+client.o: ./client.c
+parser.o: ./parser.c
+http.o: ./http.c
+file_helper.o: ./file_helper.c
 
 clean:
 	rm -rf *.o server client *.tar.gz ./html ./latex *.stderr *.stdout *.returncodes
@@ -65,6 +65,6 @@ check-valgrind: all
     	./server
 
 package: .FORCE
-	tar -cvzf melcher_http.tar.gz ./Makefile ./src
+	tar -cvzf melcher_http.tar.gz ./Makefile *.c *.h
 
 .FORCE:

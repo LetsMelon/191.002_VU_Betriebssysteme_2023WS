@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <limits.h>
 #include <netdb.h>
 #include <signal.h>
@@ -88,6 +89,10 @@ static bool str_starts_with(const char *input, const char *search_pattern) {
 static int parse_hostname_filepath_filename(const arguments_t *args,
                                             char **hostname, char **filepath,
                                             char **filename) {
+  if (strlen(args->url) < strlen("http://a/")) {
+    return -1;
+  }
+
   int hostname_start = strlen("http://"), hostname_stop = hostname_start;
   int filepath_start = hostname_stop, filepath_stop = strlen(args->url);
   int filename_start = hostname_stop, filename_stop = strlen(args->url);
@@ -126,6 +131,10 @@ static int parse_hostname_filepath_filename(const arguments_t *args,
   int hostname_len = hostname_stop - hostname_start;
   int filepath_len = filepath_stop - filepath_start;
   int filename_len = filename_stop - filename_start;
+
+  if (hostname_len <= 0 || filepath_len <= 0 || filename_len <= 0) {
+    return -1;
+  }
 
   *hostname = calloc(hostname_len + 1, sizeof(char));
   *filepath = calloc(filepath_len + 1, sizeof(char));
@@ -192,7 +201,7 @@ int main(int argc, char **argv) {
           args.port, args.file == NULL ? "NULL" : args.file,
           args.dir == NULL ? "NULL" : args.dir, args.url);
 
-  char *hostname, *filepath, *filename;
+  char *hostname = NULL, *filepath = NULL, *filename = NULL;
   if (parse_hostname_filepath_filename(&args, &hostname, &filepath, &filename) <
       0) {
     if (hostname != NULL) {
@@ -295,14 +304,15 @@ int main(int argc, char **argv) {
   }
 
   int buffer_size = 2048;
-  char h_buf[buffer_size];
+  char tmp_buf[buffer_size];
   int read_lines = 0;
   bool is_body = false;
 
-  while (fgets(h_buf, buffer_size, connection) != NULL) {
+  while (fgets(tmp_buf, buffer_size, connection) != NULL) {
+#ifdef DEBUG
     fprintf(stderr, "DEBUG %c %d:\t'", is_body == true ? 'b' : 'h', read_lines);
     for (int i = 0; i < buffer_size; i += 1) {
-      char c = h_buf[i];
+      char c = tmp_buf[i];
 
       char *to_print;
 
@@ -347,10 +357,11 @@ int main(int argc, char **argv) {
       }
     }
     fprintf(stderr, "'\n");
+#endif
 
     if (read_lines == 0) {
       string_list_t items;
-      if (p_split_at(h_buf, ' ', &items) < 0) {
+      if (p_split_at(tmp_buf, ' ', &items) < 0) {
         fclose(connection);
         close(sockfd);
 
@@ -358,7 +369,7 @@ int main(int argc, char **argv) {
       }
 
       if (items.num < 3) {
-        fprintf(stderr, "Protocol error!");
+        fprintf(stderr, "Protocol error!\n");
 
         sl_free(&items);
 
@@ -370,7 +381,7 @@ int main(int argc, char **argv) {
 
       long raw_status = strtol(items.values[1], NULL, 10);
       if (strcmp(items.values[0], "HTTP/1.1") != 0 || raw_status < 1) {
-        fprintf(stderr, "Protocol error!");
+        fprintf(stderr, "Protocol error!\n");
 
         sl_free(&items);
 
@@ -380,23 +391,87 @@ int main(int argc, char **argv) {
         return 2;
       }
 
-      sl_free(&items);
-
       status_code_e status = status_code_from_int((int)raw_status);
       if (status != STATUS_OK) {
-        fprintf(stderr, "%d %s\n", (int)status, status_to_text(&status));
+        sl_print(&items);
+
+        int total_len = 0;
+        int index_start = 2;
+        int index_stop = 3;
+        int last_item_len = 0;
+        int count = 0;
+
+        for (int i = index_start; i < items.num; i += 1) {
+          char *item = items.values[i];
+          int item_len = strlen(item);
+          bool had_special_character = false;
+
+          for (int j = 0; j < item_len; j += 1) {
+            if (!isalnum(item[j])) {
+              had_special_character = true;
+
+              total_len += j;
+              index_stop = i + 1;
+              last_item_len = j;
+              break;
+            }
+          }
+
+          if (had_special_character == false) {
+            total_len += item_len;
+          } else {
+            break;
+          }
+
+          count += 1;
+        }
+
+        char *status_text = calloc(total_len + 1 + count, sizeof(char));
+        if (status_text == NULL) {
+          sl_free(&items);
+
+          fclose(connection);
+          close(sockfd);
+
+          return 3;
+        }
+
+        int write_head = 0;
+        for (int i = index_start; i < index_stop; i += 1) {
+          char *item = items.values[i];
+
+          if (i == index_stop - 1) {
+            strncpy(&status_text[write_head], item, last_item_len);
+          } else {
+            strcpy(&status_text[write_head], item);
+            write_head += strlen(item);
+            status_text[write_head] = ' ';
+            write_head += 1;
+          }
+        }
+
+        // TODO replace here 'raw_status' with 'status' and use
+        // 'status_to_text(&status)', blocked by status_code_from_int (does not
+        // implement every status code)
+        fprintf(stderr, "%ld %s\n", raw_status, status_text);
+
+        free(status_text);
+
+        sl_free(&items);
 
         fclose(connection);
         close(sockfd);
 
         return 3;
       }
+
+      sl_free(&items);
     }
 
-    if (h_buf[0] == '\r' && h_buf[1] == '\n') {
+    if (tmp_buf[0] == '\r' && tmp_buf[1] == '\n') {
       is_body = true;
     } else if (is_body == true) {
-      fputs(h_buf, output);
+      fputs(tmp_buf, output);
     }
 
     read_lines += 1;
