@@ -1,3 +1,11 @@
+/**
+ * @file http.c
+ * @author Domenic Melcher <e12220857@student.tuwien.ac.at>
+ * @date 09.01.2024
+ *
+ * @brief Provides utility functions for a http server
+ */
+
 #include "http.h"
 
 #include <netdb.h>
@@ -48,7 +56,13 @@ int create_socket(const struct addrinfo *info, int *sockfd) {
   return 0;
 }
 
-const char *status_to_text(status_code_e *status) {
+/**
+ * @brief Converts an HTTP status code to its corresponding textual
+ * representation.
+ * @param status The HTTP status code enumeration.
+ * @return Returns the textual representation of the status code.
+ */
+static const char *status_to_text(status_code_e *status) {
   switch (*status) {
   case STATUS_OK:
     return "OK";
@@ -72,6 +86,22 @@ const char *status_to_text(status_code_e *status) {
   }
 }
 
+/**
+ * @brief Converts the current time to RFC822 format and stores it in the
+ * provided buffer.
+ *
+ * This function retrieves the current time, converts it to the RFC822 date-time
+ * format, and stores it in the provided buffer.
+ *
+ * @param buffer Pointer to the buffer where the RFC822-formatted time will be
+ * stored.
+ * @param size Size of the buffer.
+ * @return Returns the length of the formatted string (excluding the null
+ * terminator) on success, or -1 on failure.
+ *
+ * @note The caller is responsible for ensuring that the buffer has sufficient
+ * space to store the formatted time.
+ */
 static int time_as_rfc822(char *buffer, int size) {
   time_t tmp_time;
   if (time(&tmp_time) == (time_t)-1) {

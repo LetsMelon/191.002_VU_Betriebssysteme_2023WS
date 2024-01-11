@@ -1,3 +1,11 @@
+/**
+ * @file client.c
+ * @author Domenic Melcher <e12220857@student.tuwien.ac.at>
+ * @date 09.01.2024
+ *
+ * @brief Implements a simple HTTP client.
+ */
+
 #include <ctype.h>
 #include <limits.h>
 #include <netdb.h>
@@ -25,15 +33,35 @@
       char *: fprintf(stderr, "'%s'", value),                                  \
       default: fprintf(stderr, "Unknown Type"))
 
+/**
+ * @brief Usage information for the server program.
+ */
 static char *USAGE = "SYNOPSIS\n"
                      "\tclient [-p PORT] [ -o FILE | -d DIR ] URL\n"
                      "EXAMPLE\n"
                      "\tclient http://www.example.com/\n";
 
+/**
+ * @struct arguments_t
+ * @brief Structure to hold parsed command-line arguments.
+ */
 typedef struct {
-  char *port, *file, *dir, *url;
+  char *port; /**< port of the requested server */
+  char *file; /**< file of where to save the response, can be `NULL` */
+  char *dir;  /**< directory of where to save the response, can be `NULL` */
+  char *url;  /**< request url */
 } arguments_t;
 
+/**
+ * @brief Parse command-line arguments for the client program.
+ *
+ * Parses the command-line arguments and populates the 'args' structure.
+ *
+ * @param argc The number of command-line arguments.
+ * @param argv The array of command-line arguments.
+ * @param args The structure to store parsed arguments.
+ * @return 0 on success, -1 on failure.
+ */
 static int arguments_parse(int argc, char **argv, arguments_t *args) {
   args->port = "80";
   args->file = NULL;
@@ -82,10 +110,31 @@ static int arguments_parse(int argc, char **argv, arguments_t *args) {
   return 0;
 }
 
+/**
+ * @brief Check if a string starts with a specific pattern.
+ *
+ * Checks if the given string starts with a specified pattern.
+ *
+ * @param input The input string.
+ * @param search_pattern The pattern to search for at the beginning of the
+ * string.
+ * @return true if the string starts with the pattern, false otherwise.
+ */
 static bool str_starts_with(const char *input, const char *search_pattern) {
   return memcmp(input, search_pattern, strlen(search_pattern)) == 0;
 }
 
+/**
+ * @brief Parse the hostname, filepath, and filename from the URL.
+ *
+ * Parses the URL to extract the hostname, filepath, and filename.
+ *
+ * @param args The parsed command-line arguments.
+ * @param hostname Pointer to store the extracted hostname.
+ * @param filepath Pointer to store the extracted filepath.
+ * @param filename Pointer to store the extracted filename.
+ * @return 0 on success, -1 on failure.
+ */
 static int parse_hostname_filepath_filename(const arguments_t *args,
                                             char **hostname, char **filepath,
                                             char **filename) {
@@ -183,6 +232,17 @@ static int parse_hostname_filepath_filename(const arguments_t *args,
   return 0;
 }
 
+/**
+ * @brief Main function for the HTTP client program.
+ *
+ * This function handles the core logic of the HTTP client, including
+ * command-line argument parsing, URL parsing, socket creation, HTTP request,
+ * and response handling.
+ *
+ * @param argc The number of command-line arguments.
+ * @param argv The array of command-line arguments.
+ * @return EXIT_SUCCESS on success, EXIT_FAILURE on failure.
+ */
 int main(int argc, char **argv) {
   arguments_t args;
   if (arguments_parse(argc, argv, &args) != 0) {

@@ -3,7 +3,7 @@
  * @author Domenic Melcher <e12220857@student.tuwien.ac.at>
  * @date 12.11.2023
  *
- * @brief Provides utility functions for parsing float complex values
+ * @brief Provides utility functions for parsing
  */
 
 #ifndef _P
@@ -12,6 +12,9 @@
 #include <complex.h>
 #include <stdbool.h>
 
+/**
+ * @struct string_list_t
+ */
 typedef struct {
   char **values; ///< Internal array of owned char*
 

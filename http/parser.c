@@ -1,3 +1,11 @@
+/**
+ * @file parser.c
+ * @author Domenic Melcher <e12220857@student.tuwien.ac.at>
+ * @date 12.11.2023
+ *
+ * @brief Provides utility functions for parsing
+ */
+
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>

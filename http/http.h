@@ -1,9 +1,9 @@
 /**
- * @file parser.h
+ * @file http.h
  * @author Domenic Melcher <e12220857@student.tuwien.ac.at>
  * @date 09.01.2024
  *
- * @brief Provides utility functions for parsing float complex values
+ * @brief Provides utility functions for a http server
  */
 
 #ifndef _H
@@ -12,6 +12,9 @@
 #include <netdb.h>
 #include <stdio.h>
 
+/**
+ * @brief Enumeration defining various HTTP request methods.
+ */
 typedef enum {
   REQUEST_GET = 0,
   REQUEST_POST,
@@ -24,6 +27,9 @@ typedef enum {
   REQUEST_CONNECT,
 } request_method_e;
 
+/**
+ * @brief Enumeration defining different HTTP versions.
+ */
 typedef enum {
   HTTP_1_0 = 0,
   HTTP_1_1,
@@ -31,6 +37,9 @@ typedef enum {
   HTTP_3,
 } http_version_e;
 
+/**
+ * @brief Enumeration defining various HTTP status codes.
+ */
 typedef enum {
   STATUS_CONTINUE = 100,
   STATUS_SWITCHING_PROTOCOLS = 101,
@@ -101,37 +110,90 @@ typedef enum {
   STATUS_NETWORK_AUTHENTICATION_REQUIRED = 511,
 } status_code_e;
 
+/**
+ * @struct request_t
+ * @brief Structure representing an HTTP request.
+ */
 typedef struct {
-  request_method_e method;
-  http_version_e version;
+  request_method_e method; /**< HTTP Method of the request */
+  http_version_e version;  /**< HTTP Version */
 
-  char *file_path, *hostname;
+  char *file_path; /**< Requested file path */
+  char *hostname;  /**< Hostname of the request */
 } request_t;
 
+/**
+ * @brief Frees the memory occupied by an HTTP request structure.
+ * @param request Pointer to the request structure to be freed.
+ */
 void request_free(request_t *request);
 
+/**
+ * @struct response_t
+ * @brief Structure representing an HTTP response.
+ */
 typedef struct {
-  http_version_e version;
-  status_code_e status_code;
+  http_version_e version;    /**< HTTP Version */
+  status_code_e status_code; /**< HTTP Status code */
 
-  FILE *body;
-  long body_len;
+  FILE *body;    /**< file from the response file, can be NULL */
+  long body_len; /**< file len, can be 0 if `body == NULL` */
 } response_t;
 
+/**
+ * @brief Frees the memory occupied by an HTTP response structure.
+ * @param response Pointer to the response structure to be freed.
+ */
 void response_free(response_t *response);
 
+/**
+ * @brief Retrieves address information based on the provided address and
+ * port.
+ * @param addr The address to be resolved.
+ * @param port The port associated with the address.
+ * @param out Pointer to the structure to store the result.
+ * @return Returns 0 on success, or an error code on failure.
+ */
 int get_addrinfo(const char *addr, const char *port, struct addrinfo **out);
 
+/**
+ * @brief Creates a socket based on the provided address information.
+ * @param info Address information used to create the socket.
+ * @param sockfd Pointer to the socket file descriptor.
+ * @return Returns 0 on success, or an error code on failure.
+ */
 int create_socket(const struct addrinfo *info, int *sockfd);
 
+/**
+ * @brief Sends an HTTP response through the provided socket.
+ * @param socket File stream representing the socket.
+ * @param response The HTTP response structure.
+ * @return Returns 0 on success, or an error code on failure.
+ */
 int respond(FILE *socket, response_t response);
 
+/**
+ * @brief Sends an HTTP error response through the provided socket. Wrapper
+ * around `respond`
+ * @param socket File stream representing the socket.
+ * @param status The HTTP status code for the error response.
+ * @return Returns 0 on success, or an error code on failure.
+ */
 int respond_error(FILE *socket, status_code_e status);
 
+/**
+ * @brief Handles an HTTP request received through the provided socket.
+ * @param socket File stream representing the socket.
+ * @param request The HTTP request structure.
+ * @return Returns 0 on success, or an error code on failure.
+ */
 int request(FILE *socket, request_t request);
 
+/**
+ * @brief Converts an integer value to its corresponding HTTP status code.
+ * @param value The integer value representing an HTTP status code.
+ * @return Returns the corresponding status code enumeration.
+ */
 status_code_e status_code_from_int(int value);
-
-const char *status_to_text(status_code_e *status);
 
 #endif /* _H */

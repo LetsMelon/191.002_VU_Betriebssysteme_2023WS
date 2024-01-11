@@ -1,3 +1,11 @@
+/**
+ * @file server.c
+ * @author Domenic Melcher <e12220857@student.tuwien.ac.at>
+ * @date 09.01.2024
+ *
+ * @brief Implements a simple HTTP server.
+ */
+
 #include <limits.h>
 #include <netdb.h>
 #include <signal.h>
@@ -15,25 +23,64 @@
 #include "http.h"
 #include "parser.h"
 
+/**
+ * @brief Usage information for the server program.
+ */
 static char *USAGE =
     "SYNOPSIS\n\tserver [-p PORT] [-i INDEX] DOC_ROOT\nEXAMPLE\n\tserver -p "
     "1280 -i index.html ~/Documents/my_website/\n";
 
-typedef struct {
-  char *port, *index, *doc_root;
-} arguments_t;
+volatile bool in_shutdown = true; // Boolean variable for the main loop
 
-volatile bool in_shutdown = true;
+/**
+ * @brief Signal handler to exit the main loop.
+ *
+ * This function sets the global variable 'in_shutdown' to false when called.
+ * It is intended to be used as a signal handler for triggering the termination
+ * of the main loop in the HTTP server. Does not exits the server process
+ * immediately!
+ *
+ * @param signal The signal number that triggered the handler.
+ */
+static void handle_exit_loop(int signal) { in_shutdown = false; }
 
-void handle_exit_loop(int signal) { in_shutdown = false; }
-
-void handle_shutdown(int signal) {
+/**
+ * @brief Signal handler to handle the server shutdown.
+ *
+ * This function first calls 'handle_exit_loop' to set 'in_shutdown' to false,
+ * indicating the intention to exit the main loop. After that, it gracefully
+ * exits the server process with a success status.
+ *
+ * @param signal The signal number that triggered the handler.
+ */
+static void handle_shutdown(int signal) {
   handle_exit_loop(signal);
 
   exit(EXIT_SUCCESS);
 }
 
-int arguments_parse(int argc, char **argv, arguments_t *args) {
+/**
+ * @struct arguments_t
+ * @brief Structure to hold command-line arguments.
+ */
+typedef struct {
+  char *port;     /**< port of the server*/
+  char *index;    /**< what's the index file*/
+  char *doc_root; /**< the document root of the server*/
+} arguments_t;
+
+/**
+ * @brief Parses command line arguments and populates the arguments_t structure.
+ *
+ * This function parses the command line arguments and populates the arguments_t
+ * structure. The default values for port and index are used if not provided.
+ *
+ * @param argc Number of command line arguments.
+ * @param argv Array of command line argument strings.
+ * @param args Pointer to the arguments_t structure to be populated.
+ * @return Returns 0 on success, -1 on failure.
+ */
+static int arguments_parse(int argc, char **argv, arguments_t *args) {
   args->port = "80";
   args->index = "index.html";
 
@@ -85,11 +132,31 @@ int arguments_parse(int argc, char **argv, arguments_t *args) {
   return 0;
 }
 
-void arguments_free(arguments_t *args) {
+/**
+ * @brief Frees memory allocated for command line arguments.
+ *
+ * This function frees the memory allocated for the doc_root string in the
+ * arguments_t structure.
+ *
+ * @param args Pointer to the arguments_t structure.
+ */
+static void arguments_free(arguments_t *args) {
   free(args->doc_root);
   args->doc_root = NULL;
 }
 
+/**
+ * @brief Main entry point for the HTTP server.
+ *
+ * This function is the main entry point for the HTTP server. It parses command
+ * line arguments, sets up the server socket, listens for incoming connections,
+ * and handles incoming HTTP requests.
+ *
+ * @param argc Number of command line arguments.
+ * @param argv Array of command line argument strings.
+ * @return Returns EXIT_SUCCESS on successful execution, EXIT_FAILURE on
+ * failure.
+ */
 int main(int argc, char **argv) {
   arguments_t args;
   if (arguments_parse(argc, argv, &args) != 0) {
