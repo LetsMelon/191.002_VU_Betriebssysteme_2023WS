@@ -41,6 +41,7 @@ volatile bool in_shutdown = true; // Boolean variable for the main loop
  * immediately!
  *
  * @param signal The signal number that triggered the handler.
+ * @details global variables: in_shutdown
  */
 static void handle_exit_loop(int signal) { in_shutdown = false; }
 
