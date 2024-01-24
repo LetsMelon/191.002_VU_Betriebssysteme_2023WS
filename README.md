@@ -6,5 +6,3 @@ License: [WTFPL](./LICENSE)
  - Exercise 1B: [forkFFT](./forkFFT/src/main.c)
  - Exercise 2: [3coloring](./3coloring/supervisor.c)
  - Exercise 3: [http](./http/server.c)
-
-
