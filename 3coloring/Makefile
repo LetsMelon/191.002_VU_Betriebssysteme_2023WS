@@ -65,6 +65,6 @@ check-valgrind: all
     	./generator 0-1 0-2 1-3 2-3 4-5 4-6
 
 package: .FORCE
-	tar -cvzf melcher_3coloring.tar.gz ./Makefile ./src
+	tar -cvzf melcher_3coloring.tar.gz ./Makefile *.c *.h
 
 .FORCE:

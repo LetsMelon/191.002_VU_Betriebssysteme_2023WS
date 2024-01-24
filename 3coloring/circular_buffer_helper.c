@@ -13,7 +13,7 @@
 #include "shared_memory.h"
 
 int cbh_read_solution(shared_memory_t *shared_memory, solution_t *solution) {
-  if (sem_trywait(shared_memory->semaphore_buffer_used_space) != 0) {
+  if (sem_wait(shared_memory->semaphore_buffer_used_space) != 0) {
     return -1;
   }
 
