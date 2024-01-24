@@ -30,7 +30,7 @@ static char *USAGE =
     "SYNOPSIS\n\tserver [-p PORT] [-i INDEX] DOC_ROOT\nEXAMPLE\n\tserver -p "
     "1280 -i index.html ~/Documents/my_website/\n";
 
-volatile bool in_shutdown = true; // Boolean variable for the main loop
+volatile bool in_shutdown = false; // Boolean variable for the main loop
 
 /**
  * @brief Signal handler to exit the main loop.
@@ -43,7 +43,7 @@ volatile bool in_shutdown = true; // Boolean variable for the main loop
  * @param signal The signal number that triggered the handler.
  * @details global variables: in_shutdown
  */
-static void handle_exit_loop(int signal) { in_shutdown = false; }
+static void handle_exit_loop(int signal) { in_shutdown = true; }
 
 /**
  * @brief Signal handler to handle the server shutdown.
@@ -199,7 +199,7 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  while (in_shutdown) {
+  while (in_shutdown == false) {
     signal(SIGINT, handle_shutdown);
     signal(SIGTERM, handle_shutdown);
 

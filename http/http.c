@@ -49,7 +49,7 @@ int create_socket(const struct addrinfo *info, int *sockfd) {
   }
 
   int optval = 1;
-  setsockopt(tmp_sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
+  setsockopt(tmp_sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
 
   *sockfd = tmp_sockfd;
 
