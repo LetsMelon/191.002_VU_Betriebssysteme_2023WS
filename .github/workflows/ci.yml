@@ -25,7 +25,7 @@ jobs:
   build_test:
     strategy:
       matrix:
-        projects: [3coloring, forkFFT, mygrep]
+        projects: [3coloring, forkFFT, mygrep, http]
 
     runs-on: ubuntu-latest
 
