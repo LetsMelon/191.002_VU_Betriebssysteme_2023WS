@@ -125,6 +125,12 @@ int sm_open(shared_memory_t *shared_memory, bool is_master) {
     sem_close(shared_memory->semaphore_buffer_mutex);
     sem_unlink(SEM_MUTEX);
 
+    sem_close(shared_memory->semaphore_buffer_used_space);
+    sem_unlink(SEM_BUFFER_USED_SPACE);
+
+    sem_close(shared_memory->semaphore_buffer_free_space);
+    sem_unlink(SEM_BUFFER_FREE_SPACE);
+
     return -1;
   }
 
@@ -137,6 +143,12 @@ int sm_open(shared_memory_t *shared_memory, bool is_master) {
 
       sem_close(shared_memory->semaphore_buffer_mutex);
       sem_unlink(SEM_MUTEX);
+
+      sem_close(shared_memory->semaphore_buffer_used_space);
+      sem_unlink(SEM_BUFFER_USED_SPACE);
+
+      sem_close(shared_memory->semaphore_buffer_free_space);
+      sem_unlink(SEM_BUFFER_FREE_SPACE);
 
       close(shared_memory->fd);
       shm_unlink(SHM_BUFFER);
@@ -158,6 +170,12 @@ int sm_open(shared_memory_t *shared_memory, bool is_master) {
     sem_close(shared_memory->semaphore_buffer_mutex);
     sem_unlink(SEM_MUTEX);
 
+    sem_close(shared_memory->semaphore_buffer_used_space);
+    sem_unlink(SEM_BUFFER_USED_SPACE);
+
+    sem_close(shared_memory->semaphore_buffer_free_space);
+    sem_unlink(SEM_BUFFER_FREE_SPACE);
+
     close(shared_memory->fd);
     shm_unlink(SHM_BUFFER);
 
@@ -168,15 +186,19 @@ int sm_open(shared_memory_t *shared_memory, bool is_master) {
   if (is_master == true) {
     if (cb_init(shared_memory->buffer) < 0) {
       sem_close(shared_memory->semaphore_in_shutdown);
-      sem_close(shared_memory->semaphore_buffer_mutex);
-
-      munmap(shared_memory->buffer, sizeof(circular_buffer_t));
-
-      close(shared_memory->fd);
-
       sem_unlink(SEM_SHUTDOWN);
+
+      sem_close(shared_memory->semaphore_buffer_mutex);
       sem_unlink(SEM_MUTEX);
 
+      sem_close(shared_memory->semaphore_buffer_used_space);
+      sem_unlink(SEM_BUFFER_USED_SPACE);
+
+      sem_close(shared_memory->semaphore_buffer_free_space);
+      sem_unlink(SEM_BUFFER_FREE_SPACE);
+
+      munmap(shared_memory->buffer, sizeof(circular_buffer_t));
+      close(shared_memory->fd);
       shm_unlink(SHM_BUFFER);
 
       return -1;
